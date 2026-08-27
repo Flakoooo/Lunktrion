@@ -1,0 +1,4 @@
+<Solution>
+  <Project Path="../LunktrionShared/LunktrionShared/LunktrionShared.csproj" />
+  <Project Path="LunktrionApp/LunktrionApp.csproj" />
+</Solution>

@@ -1,0 +1,52 @@
+services:
+  lunktrionapi:
+    image: lunktrionapi:latest
+    container_name: LunktrionAPI
+    ports:
+      - "50000:50000"
+    volumes:
+      - ${APPDATA}/Microsoft/UserSecrets:/home/app/.microsoft/usersecrets:ro
+      - ${APPDATA}/Microsoft/UserSecrets:/root/.microsoft/usersecrets:ro
+      - ${APPDATA}/ASP.NET/Https:/home/app/.aspnet/https:ro
+      - ${APPDATA}/ASP.NET/Https:/root/.aspnet/https:ro
+    environment:
+      - ASPNETCORE_ENVIRONMENT=Development
+      - ASPNETCORE_HTTP_PORTS=50000
+      - ConnectionStrings__RabbitMQ=amqp://guest:guest@rabbitmq:5672/
+      - ConnectionStrings__Redis=redis:6379,abortConnect=false
+    build:
+      context: .
+      dockerfile: LunktrionApi/Dockerfile
+    depends_on:
+      - rabbitmq
+      - redis
+    networks:
+      - lunktrionapi_network
+  rabbitmq:
+    image: rabbitmq:3.13-management
+    container_name: LunktrionAPI_RabbitMQ
+    ports:
+      - "50100:5672" 
+      - "50110:15672"
+    volumes:
+      - rabbitmq_data:/var/lib/rabbitmq
+    environment:
+      - RABBITMQ_DEFAULT_USER=guest
+      - RABBITMQ_DEFAULT_PASS=guest
+    networks:
+      - lunktrionapi_network
+  redis:
+    image: redis:7-alpine
+    container_name: LunktrionAPI_Redis
+    ports:
+      - "50101:6379"
+    volumes:
+      - redis_data:/data
+    networks:
+      - lunktrionapi_network
+volumes:
+  rabbitmq_data:
+  redis_data:
+networks:
+  lunktrionapi_network:
+    driver: bridge

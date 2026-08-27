@@ -1,0 +1,88 @@
+<ResourceDictionary xmlns="https://github.com/avaloniaui"
+                    xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml">
+
+    <Design.PreviewWith>
+        <StackPanel Margin="15">
+            <Button Theme="{StaticResource OrangeButton}" Content="OrangeButton" />
+        </StackPanel>
+    </Design.PreviewWith>
+
+    <ControlTheme x:Key="OrangeButton" TargetType="Button">
+        <Setter Property="Background" Value="#FF8033" />
+        <Setter Property="Foreground" Value="#F5E6D8" />
+        <Setter Property="Padding" Value="10" />
+        <Setter Property="CornerRadius" Value="12" />
+        <Setter Property="FontSize" Value="32" />
+        <Setter Property="HorizontalContentAlignment" Value="Center" />
+        <Setter Property="VerticalContentAlignment" Value="Center" />
+    
+        <Setter Property="Template">
+            <ControlTemplate>
+                <ContentPresenter x:Name="PART_ContentPresenter"
+                                    Background="{TemplateBinding Background}"
+                                    Foreground="{TemplateBinding Foreground}"
+                                    Padding="{TemplateBinding Padding}"
+                                    Content="{TemplateBinding Content}"
+                                    TextWrapping="Wrap"
+                                    TextAlignment="Center"
+                                    CornerRadius="{TemplateBinding CornerRadius}"
+                                    HorizontalContentAlignment="{TemplateBinding HorizontalContentAlignment}"
+                                    VerticalContentAlignment="{TemplateBinding VerticalContentAlignment}">
+                    <ContentPresenter.Transitions>
+                        <Transitions>
+                            <BrushTransition Property="Background" Duration="0:0:0.2" />
+                        </Transitions>
+                    </ContentPresenter.Transitions>
+                </ContentPresenter>
+            </ControlTemplate>
+        </Setter>
+
+        <Style Selector="^:pointerover /template/ ContentPresenter#PART_ContentPresenter">
+            <Setter Property="Background" Value="#FF6305" />
+        </Style>
+
+        <Style Selector="^:pressed /template/ ContentPresenter#PART_ContentPresenter">
+            <Setter Property="Background" Value="#D65100" />
+        </Style>
+    </ControlTheme>
+
+    <ControlTheme x:Key="RedButton" TargetType="Button">
+        <Setter Property="Background" Value="#D95C4A" />
+        <Setter Property="Foreground" Value="#F5E6D8" />
+        <Setter Property="Padding" Value="10" />
+        <Setter Property="CornerRadius" Value="12" />
+        <Setter Property="FontSize" Value="32" />
+        <Setter Property="HorizontalContentAlignment" Value="Center" />
+        <Setter Property="VerticalContentAlignment" Value="Center" />
+    
+        <Setter Property="Template">
+            <ControlTemplate>
+                <ContentPresenter x:Name="PART_ContentPresenter"
+                                    Background="{TemplateBinding Background}"
+                                    Foreground="{TemplateBinding Foreground}"
+                                    Padding="{TemplateBinding Padding}"
+                                    Content="{TemplateBinding Content}"
+                                    TextWrapping="Wrap"
+                                    TextAlignment="Center"
+                                    CornerRadius="{TemplateBinding CornerRadius}"
+                                    HorizontalContentAlignment="{TemplateBinding HorizontalContentAlignment}"
+                                    VerticalContentAlignment="{TemplateBinding VerticalContentAlignment}">
+                    <ContentPresenter.Transitions>
+                        <Transitions>
+                            <BrushTransition Property="Background" Duration="0:0:0.2" />
+                        </Transitions>
+                    </ContentPresenter.Transitions>
+                </ContentPresenter>
+            </ControlTemplate>
+        </Setter>
+
+        <Style Selector="^:pointerover /template/ ContentPresenter#PART_ContentPresenter">
+            <Setter Property="Background" Value="#CC3F2B" />
+        </Style>
+
+        <Style Selector="^:pressed /template/ ContentPresenter#PART_ContentPresenter">
+            <Setter Property="Background" Value="#A83423" />
+        </Style>
+    </ControlTheme>
+
+</ResourceDictionary>

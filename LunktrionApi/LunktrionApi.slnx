@@ -1,0 +1,8 @@
+<Solution>
+  <Project Path="../LunktrionShared/LunktrionShared/LunktrionShared.csproj" />
+  <Project Path="docker-compose.dcproj">
+    <Build />
+  </Project>
+  <Project Path="LunktrionApi.Tests/LunktrionApi.Tests.csproj" />
+  <Project Path="LunktrionApi/LunktrionApi.csproj" />
+</Solution>

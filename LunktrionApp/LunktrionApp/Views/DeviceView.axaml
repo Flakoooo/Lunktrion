@@ -1,0 +1,112 @@
+<UserControl xmlns="https://github.com/avaloniaui"
+             xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
+             xmlns:d="http://schemas.microsoft.com/expression/blend/2008"
+             xmlns:mc="http://schemas.openxmlformats.org/markup-compatibility/2006"
+             xmlns:vm="using:LunktrionApp.ViewModels"
+             xmlns:ic="using:FluentIcons.Avalonia"
+             mc:Ignorable="d" d:DesignWidth="1400" d:DesignHeight="1000"
+             x:Class="LunktrionApp.Views.DeviceView"
+             x:DataType="vm:DeviceViewModel">
+
+    <Design.DataContext>
+        <vm:DeviceViewModel />
+    </Design.DataContext>
+
+    <Border Margin="12.5, 25, 25, 25" Background="#241C16" CornerRadius="16">
+        <Grid RowDefinitions="30*, 70*">
+            <Border Grid.Row="0" BorderThickness="0, 0, 0, 2" BorderBrush="#B85C1E" Padding="25, 25, 25, 25">
+                <Grid ColumnDefinitions="22*, 78*">
+                    <Border Grid.Column="0" 
+                            Width="250" 
+                            Height="250" 
+                            CornerRadius="125"
+                            Background="#F5E6D8"
+                            HorizontalAlignment="Left">
+                        <ic:FluentIcon Icon="Laptop" 
+                                       IconVariant="Filled" 
+                                       IconSize="Size48" 
+                                       FontSize="200"
+                                       Foreground="#FF8033" 
+                                       HorizontalAlignment="Center" 
+                                       VerticalAlignment="Center" />
+                    </Border>
+                    <Grid Grid.Column="1" RowDefinitions="25*, 25*, 25*, 25*">
+                        <StackPanel Grid.Row="0" Orientation="Horizontal" Spacing="16" HorizontalAlignment="Right" VerticalAlignment="Center">
+                            <TextBlock FontSize="32" Foreground="#A8998D" Text="{Binding IsConnectedText}" />
+                            <Ellipse Fill="{Binding IsConnectedColor}" Width="25" Height="25" />
+                        </StackPanel>
+                        <TextBlock Grid.Row="1" FontSize="40" Foreground="#F5E6D8" Text="{Binding CurrentDevice.DeviceName}" />
+                        <TextBlock Grid.Row="2" FontSize="32" Foreground="#A8998D" Text="{Binding CurrentDevice.OperatingSystemName}" />
+                    </Grid>
+                </Grid>
+            </Border>
+            <Grid Grid.Row="1" ColumnDefinitions="70*, 30*" Margin="20">
+                <StackPanel Grid.Column="0" Spacing="20">
+                    <StackPanel Orientation="Horizontal" Spacing="12">
+                        <ic:FluentIcon Icon="DesktopFlow" 
+                                       IconVariant="Filled" 
+                                       IconSize="Size20" 
+                                       FontSize="100"
+                                       Foreground="#FF8033" 
+                                       HorizontalAlignment="Center" 
+                                       VerticalAlignment="Center" />
+                        <StackPanel VerticalAlignment="Center">
+                            <TextBlock FontSize="32" Foreground="#F5E6D8" Text="{Binding DeviceCPUInfo.Name}" />
+                            <TextBlock FontSize="24" Foreground="#A8998D" Text="{Binding DeviceCPUSpecifications}" />
+                        </StackPanel>
+                    </StackPanel>
+                    <StackPanel Orientation="Horizontal" Spacing="12">
+                        <ic:FluentIcon Icon="DesktopCursor" 
+                                       IconVariant="Filled" 
+                                       IconSize="Size20" 
+                                       FontSize="100"
+                                       Foreground="#FF8033" 
+                                       HorizontalAlignment="Center" 
+                                       VerticalAlignment="Center" />
+                        <StackPanel VerticalAlignment="Center">
+                            <TextBlock FontSize="32" Foreground="#F5E6D8" Text="{Binding DeviceGPUInfo.Name}" />
+                            <TextBlock FontSize="24" Foreground="#A8998D" Text="{Binding DeviceGPUSpecifications}" />
+                        </StackPanel>
+                    </StackPanel>
+                    <StackPanel Orientation="Horizontal" Spacing="12">
+                        <ic:FluentIcon Icon="Memory" 
+                                       IconVariant="Filled" 
+                                       IconSize="Size16" 
+                                       FontSize="100"
+                                       Foreground="#FF8033" 
+                                       HorizontalAlignment="Center" 
+                                       VerticalAlignment="Center" />
+                        <StackPanel VerticalAlignment="Center">
+                            <TextBlock FontSize="32" Foreground="#F5E6D8" Text="ОЗУ" />
+                            <TextBlock FontSize="24" Foreground="#A8998D" Text="{Binding DeviceRAMSpecifications}" />
+                        </StackPanel>
+                    </StackPanel>
+                    <StackPanel Orientation="Horizontal" Spacing="12">
+                        <ic:FluentIcon Icon="HardDrive" 
+                                        IconVariant="Filled" 
+                                        IconSize="Size20" 
+                                        FontSize="100"
+                                        Foreground="#FF8033" 
+                                        HorizontalAlignment="Center" 
+                                        VerticalAlignment="Center" />
+                        <StackPanel VerticalAlignment="Center">
+                            <TextBlock FontSize="32" Foreground="#F5E6D8" Text="Диски" />
+                            <TextBlock FontSize="24" Foreground="#A8998D" Text="{Binding DeviceDriveSpecifications}" />
+                        </StackPanel>
+                    </StackPanel>
+                </StackPanel>
+                <StackPanel Grid.Column="1" Spacing="20">
+                    <Button Theme="{StaticResource OrangeButton}"
+                            Content="Выполнить команду на устройстве"
+                            IsVisible="{Binding IsCurrentDevice}" />
+                    <Button Theme="{StaticResource OrangeButton}"
+                            Content="Получить снимок экрана"
+                            IsVisible="{Binding !IsCurrentDevice}" />
+                    <Button Theme="{StaticResource RedButton}"
+                            Content="Выключить устройство"
+                            IsVisible="{Binding !IsCurrentDevice}" />
+                </StackPanel>
+            </Grid>
+        </Grid>
+    </Border>
+</UserControl>

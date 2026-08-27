@@ -1,0 +1,44 @@
+<UserControl xmlns="https://github.com/avaloniaui"
+             xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
+             xmlns:d="http://schemas.microsoft.com/expression/blend/2008"
+             xmlns:mc="http://schemas.openxmlformats.org/markup-compatibility/2006"
+             xmlns:vm="using:LunktrionApp.ViewModels"
+             xmlns:ic="using:FluentIcons.Avalonia"
+             mc:Ignorable="d" d:DesignWidth="1400" d:DesignHeight="1000"
+             x:Class="LunktrionApp.Views.LoadingView"
+             x:DataType="vm:LoadingViewModel">
+
+    <Design.DataContext>
+        <vm:LoadingViewModel />
+    </Design.DataContext>
+
+    <Border Margin="12.5, 25, 25, 25" Background="#241C16" CornerRadius="16">
+       <StackPanel HorizontalAlignment="Center"
+                   VerticalAlignment="Center"
+                   Spacing="32">
+            <ic:SymbolIcon
+                    x:Name="Icon"
+                    Symbol="LauncherSettings"
+                    FontSize="128"
+                    Foreground="#F08A3C"
+                    HorizontalAlignment="Center">
+
+                    <ic:SymbolIcon.RenderTransform>
+                        <TransformGroup>
+
+                            <ScaleTransform ScaleX="1" ScaleY="1"/>
+
+                            <RotateTransform Angle="0"/>
+
+                        </TransformGroup>
+                    </ic:SymbolIcon.RenderTransform>
+
+                </ic:SymbolIcon>
+            <TextBlock Text="Загрузка"
+                       Foreground="#F5E6D8"
+                       FontSize="30"
+                       FontWeight="SemiBold"
+                       HorizontalAlignment="Center"/>
+        </StackPanel> 
+    </Border>
+</UserControl>

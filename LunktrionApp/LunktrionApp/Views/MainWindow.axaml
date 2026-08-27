@@ -1,0 +1,26 @@
+<Window xmlns="https://github.com/avaloniaui"
+        xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
+        xmlns:d="http://schemas.microsoft.com/expression/blend/2008"
+        xmlns:mc="http://schemas.openxmlformats.org/markup-compatibility/2006"
+        xmlns:vm="using:LunktrionApp.ViewModels"
+        mc:Ignorable="d" d:DesignWidth="1920" d:DesignHeight="1080"
+        x:Class="LunktrionApp.Views.MainWindow"
+        x:DataType="vm:MainViewModel"
+        Icon="/Assets/avalonia-logo.ico"
+        Title="Lunktrion"
+        Background="#1A1410"
+        Width="1920"
+        Height="1080">
+
+    <Design.DataContext>
+        <vm:MainViewModel />
+    </Design.DataContext>
+
+    <Grid ColumnDefinitions="25*, 75*">
+        <Grid Grid.Column="0" RowDefinitions="30*, 70*"> 
+            <ContentControl Grid.Row="0" Content="{Binding Navigation}" />
+            <ContentControl Grid.Row="1" Content="{Binding ActiveDevicesList}" />
+        </Grid>
+        <ContentControl Grid.Column="1" Content="{Binding CurrentViewModel}" />
+    </Grid>
+</Window>

@@ -1,0 +1,72 @@
+<UserControl xmlns="https://github.com/avaloniaui"
+             xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
+             xmlns:d="http://schemas.microsoft.com/expression/blend/2008"
+             xmlns:mc="http://schemas.openxmlformats.org/markup-compatibility/2006"
+             xmlns:vm="using:LunktrionApp.ViewModels"
+             mc:Ignorable="d" d:DesignWidth="1400" d:DesignHeight="1000"
+             x:Class="LunktrionApp.Views.DevicesListView"
+             x:DataType="vm:DevicesListViewModel">
+
+    <Design.DataContext>
+        <vm:DevicesListViewModel />
+    </Design.DataContext>
+
+    <Border Margin="12.5, 25, 25, 25" Background="#241C16" CornerRadius="16">
+        <Grid RowDefinitions="10*, 90*">
+            <Grid Grid.Row="0" ColumnDefinitions="5*, 30*, 30*, 30*, 5*" Margin="0, 8, 0, 8" ColumnSpacing="12" VerticalAlignment="Center">
+                <TextBlock Grid.Column="1" FontSize="24" Text="Название устройства" Foreground="#F5E6D8" />
+                <TextBlock Grid.Column="2" FontSize="24" Text="Операционная система" Foreground="#F5E6D8" />
+                <TextBlock Grid.Column="3" FontSize="24" Text="Производитель" Foreground="#F5E6D8" />
+            </Grid>            
+            <ListBox Grid.Row="1"
+                     ItemsSource="{Binding Devices}" 
+                     Background="Transparent">
+                <ListBox.Styles>
+                    <Style Selector="ListBoxItem">
+                        <Setter Property="BorderBrush" Value="#B85C1E"/>
+                        <Setter Property="BorderThickness" Value="0,0,0,2"/>
+                        <Setter Property="Padding" Value="0"/> 
+                        <Setter Property="HorizontalContentAlignment" Value="Stretch"/>
+                        <Setter Property="VerticalContentAlignment" Value="Stretch"/>
+                    </Style>
+                    <Style Selector="ListBoxItem:nth-last-child(1)">
+                        <Setter Property="BorderThickness" Value="0"/>
+                    </Style>
+                    
+                    <Style Selector="Button.row-button"> 
+                        <Setter Property="Background" Value="Transparent"/>
+                        <Setter Property="BorderThickness" Value="0"/>
+                        <Setter Property="CornerRadius" Value="0"/>
+                        <Setter Property="HorizontalAlignment" Value="Stretch"/>
+                        <Setter Property="VerticalAlignment" Value="Stretch"/>
+                        <Setter Property="Padding" Value="0"/>
+                    </Style>
+
+                    <Style Selector="Button.row-button:pointerover /template/ ContentPresenter">
+                        <Setter Property="Background" Value="Transparent"/>
+                    </Style>
+                    <Style Selector="Button.row-button:pressed /template/ ContentPresenter">
+                        <Setter Property="Background" Value="Transparent"/>
+                    </Style>
+                </ListBox.Styles>                
+                <ListBox.ItemTemplate>
+                    <DataTemplate>
+                        <Button Classes="row-button"
+                                Command="{Binding $parent[ListBox].DataContext.NavigateToDeviceCommandAsync}"
+                                CommandParameter="{Binding}">
+                            
+                            <Grid ColumnDefinitions="5*, 30*, 30*, 30*, 5*" 
+                                  Margin="0, 16, 0, 16" 
+                                  ColumnSpacing="12"
+                                  Background="Transparent">
+                                <TextBlock Grid.Column="1" FontSize="24" Text="{Binding DeviceName}" Foreground="#F5E6D8" />
+                                <TextBlock Grid.Column="2" FontSize="24" Text="{Binding OperatingSystemName}" Foreground="#A8998D" />
+                                <TextBlock Grid.Column="3" FontSize="24" Text="{Binding DeviceManufacturer}" Foreground="#A8998D" />
+                            </Grid>
+                        </Button>
+                    </DataTemplate>
+                </ListBox.ItemTemplate>
+            </ListBox>
+        </Grid>
+    </Border>
+</UserControl>
