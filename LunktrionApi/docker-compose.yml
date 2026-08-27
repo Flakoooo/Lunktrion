@@ -15,8 +15,8 @@ services:
       - ConnectionStrings__RabbitMQ=amqp://guest:guest@rabbitmq:5672/
       - ConnectionStrings__Redis=redis:6379,abortConnect=false
     build:
-      context: .
-      dockerfile: LunktrionApi/Dockerfile
+      context: ..
+      dockerfile: LunktrionApi/LunktrionApi/Dockerfile
     depends_on:
       - rabbitmq
       - redis

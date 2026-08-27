@@ -5,7 +5,9 @@ using LunktrionApp.Hubs;
 using LunktrionApp.Services;
 using LunktrionShared.Models.Entities;
 using System;
+using System.Collections.Generic;
 using System.Collections.ObjectModel;
+using System.Linq;
 using System.Threading.Tasks;
 
 namespace LunktrionApp.ViewModels
@@ -17,12 +19,14 @@ namespace LunktrionApp.ViewModels
 
         public ObservableCollection<DeviceIdentity> Devices { get; } = [];
 
+
         public ActiveDevicesListViewModel(MainHub mainHub, NavigationService navigationService)
         {
             _mainHub = mainHub;
             _navigationService = navigationService;
 
             _mainHub.DeviceConnected += OnDeviceConnected;
+            _mainHub.DeviceDisconnected += OnDeviceDisconnected;
         }
 
         public ActiveDevicesListViewModel()
@@ -56,12 +60,30 @@ namespace LunktrionApp.ViewModels
 
         private void OnDeviceConnected(DeviceIdentity newDevice)
         {
-            Dispatcher.UIThread.Post(() => Devices.Add(newDevice));
+            if (!Devices.Any(d => string.Equals(d.DeviceId, newDevice.DeviceId, StringComparison.Ordinal)))
+            {
+                Dispatcher.UIThread.Post(() => Devices.Add(newDevice));
+            }
+        }
+
+        private void OnDeviceDisconnected(string disconnectedDeviceId)
+        {
+            var disconnectedDevice = Devices.FirstOrDefault(
+                d => string.Equals(
+                    d.DeviceId, disconnectedDeviceId, StringComparison.Ordinal
+                )
+            );
+
+            if (disconnectedDevice is not null)
+            {
+                Devices.Remove(disconnectedDevice);
+            }
         }
 
         public void Dispose()
         {
             _mainHub.DeviceConnected -= OnDeviceConnected;
+            _mainHub.DeviceDisconnected -= OnDeviceDisconnected;
         }
     }
 }

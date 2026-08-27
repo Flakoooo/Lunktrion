@@ -19,6 +19,11 @@ namespace LunktrionApi.Hubs
         private readonly RabbitMqService _rabbitMqService = rabbitMqService;
         private readonly ILogger<MainHub> _logger = logger;
 
+        private const string INFO_RECEIVED_MESSAGE = "DeviceInfoReceived";
+
+        private const string EXECUTE_COMMAND_MESSAGE = "ExecuteCommand";
+        private const string COMMAND_RESULT_MESSAGE = "CommandResult";
+
         public override async Task OnDisconnectedAsync(Exception? exception)
         {
             var device = _deviceRegistry.Remove(Context.ConnectionId);
@@ -84,6 +89,17 @@ namespace LunktrionApi.Hubs
                     _logger.LogInformation("Устройство {DeviceId} подключено", device.DeviceId);
                 }
 
+                var cachedCommandResponse = await _deviceRegistry.TryGetCachedDeviceExecuteCommandResponseAsync(device.DeviceId);
+                if (cachedCommandResponse is not null)
+                {
+                    await Clients.Caller.SendAsync(COMMAND_RESULT_MESSAGE, cachedCommandResponse);
+
+                    if (_logger.IsEnabled(LogLevel.Information))
+                    {
+                        _logger.LogInformation("Отправлен результат выполнения команды для устройства {DeviceId}", device.DeviceId);
+                    }
+                }
+
                 try
                 {
                     var connection = await _rabbitMqService.GetConnectionAsync();
@@ -112,7 +128,7 @@ namespace LunktrionApi.Hubs
                         {
                             try
                             {
-                                await Clients.Caller.SendAsync("ExecuteCommand", archivedRequest);
+                                await Clients.Caller.SendAsync(EXECUTE_COMMAND_MESSAGE, archivedRequest);
 
                                 await channel.BasicAckAsync(deliveryTag: result.DeliveryTag, multiple: false);
 
@@ -167,12 +183,14 @@ namespace LunktrionApi.Hubs
             if (cachedInfo is not null)
             {
                 await Clients.Caller.SendAsync(
-                    "DeviceInfoReceived", 
+                    INFO_RECEIVED_MESSAGE, 
                     new DeviceInfoResponse(cachedInfo, request.TargetDeviceId, request.RequestorDeviceId)
                 );
 
                 if (_logger.IsEnabled(LogLevel.Information))
+                {
                     _logger.LogInformation("Запрошеная информация о устройстве {TargetDeviceId} получена из кэша", request.TargetDeviceId);
+                }
 
                 return;
             }
@@ -216,8 +234,7 @@ namespace LunktrionApi.Hubs
             }
 
             await Clients.Client(targetDevice.ConnectionId).SendAsync(
-                "ExecuteCommand",
-                request
+                EXECUTE_COMMAND_MESSAGE, request
             );
 
             if (_logger.IsEnabled(LogLevel.Information))
@@ -253,10 +270,10 @@ namespace LunktrionApi.Hubs
                 return;
             }
 
-            await _deviceRegistry.SetDeviceInfoInCacheAsync(response.TargetDeviceId, response.Info);
+            await _deviceRegistry.SetDeviceInfoInCacheAsync(response);
 
             await Clients.Client(targetDevice.ConnectionId)
-                .SendAsync("DeviceInfoReceived", response);
+                .SendAsync(INFO_RECEIVED_MESSAGE, response);
 
             if (_logger.IsEnabled(LogLevel.Information))
             {
@@ -278,11 +295,14 @@ namespace LunktrionApi.Hubs
             if (targetDevice is null)
             {
                 await ExecuteErrorMessage(response.RequestorDeviceId);
+
+                await _deviceRegistry.SetDeviceExecuteCommandResponseInCacheAsync(response);
+
                 return;
             }
 
             await Clients.Client(targetDevice.ConnectionId)
-                .SendAsync("CommandResult", response);
+                .SendAsync(COMMAND_RESULT_MESSAGE, response);
         }
 
         public Task ReceiveBrowseResult(List<FileSystemEntry> entries, string requestorConnectionId)

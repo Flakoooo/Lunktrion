@@ -1,6 +1,7 @@
 ﻿using LunktrionApi.Models.Entities;
 using LunktrionShared.Models.DTOs;
 using LunktrionShared.Models.Entities;
+using LunktrionShared.Models.Responses;
 using System.Collections.Concurrent;
 
 namespace LunktrionApi.Services
@@ -122,7 +123,13 @@ namespace LunktrionApi.Services
         public async Task<DeviceInfo?> TryGetCachedDeviceInfoAsync(string targetDeviceId)
             => await _redisService.GetDeviceInfoAsync(targetDeviceId);
 
-        public async Task SetDeviceInfoInCacheAsync(string deviceId, DeviceInfo info)
-            => await _redisService.SetDeviceInfoAsync(deviceId, info);
+        public async Task<DeviceExecuteCommandResponse?> TryGetCachedDeviceExecuteCommandResponseAsync(string targetDeviceId)
+            => await _redisService.GetDeviceExecuteCommandResponseAsync(targetDeviceId);
+
+        public async Task SetDeviceInfoInCacheAsync(DeviceInfoResponse response)
+            => await _redisService.SetDeviceInfoAsync(response);
+
+        public async Task SetDeviceExecuteCommandResponseInCacheAsync(DeviceExecuteCommandResponse response)
+            => await _redisService.SetCommandOutputAsync(response);
     }
 }

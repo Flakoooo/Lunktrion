@@ -94,7 +94,9 @@ namespace LunktrionApp.Services
                     request.Command,
                     result,
                     request.TargetDeviceId,
-                    request.RequestorDeviceId
+                    request.RequestorDeviceId,
+                    request.RequestedAt,
+                    DateTime.Now
                 )
             );
         }

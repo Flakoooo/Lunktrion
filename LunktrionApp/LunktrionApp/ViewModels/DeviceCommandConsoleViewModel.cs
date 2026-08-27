@@ -53,7 +53,7 @@ namespace LunktrionApp.ViewModels
             if (!Logs.TryGetValue(deviceId, out var deviceLogs))
             {
                 deviceLogs = new ObservableCollection<ConsoleLogItem>();
-                Logs[deviceId] = [];
+                Logs[deviceId] = deviceLogs;
             }
 
             deviceLogs.Add(new ConsoleLogItem(command, logType));
@@ -113,7 +113,7 @@ namespace LunktrionApp.ViewModels
 
             AddNewLog(string.Empty, "docker compose up -d --build", ConsoleMessageType.Command);
 
-            AddNewLog(string.Empty, "иш че удумал", Models.Enums.ConsoleMessageType.Result);
+            AddNewLog(string.Empty, "иш че удумал", ConsoleMessageType.Result);
 
             _ = InitializeAsync();
         }
@@ -156,6 +156,14 @@ namespace LunktrionApp.ViewModels
 
             Dispatcher.UIThread.Post(() =>
             {
+                if (!Logs.TryGetValue(response.TargetDeviceId, out var deviceLogs))
+                {
+                    deviceLogs = new ObservableCollection<ConsoleLogItem>();
+                    Logs[response.TargetDeviceId] = deviceLogs;
+                }
+
+                deviceLogs.Add(new ConsoleLogItem(response.Command, ConsoleMessageType.Command));
+
                 AddNewLog(response.TargetDeviceId, response.Output, ConsoleMessageType.Result);
             });
         }

@@ -41,7 +41,7 @@ namespace LunktrionApp.ViewModels
         [ObservableProperty]
         [NotifyPropertyChangedFor(nameof(DeviceGPUSpecifications))]
         public partial DeviceGPUInfo? DeviceGPUInfo { get; set; }
-        public string DeviceGPUSpecifications => $"Объем {DeviceGPUInfo?.VideoRAM / 1024.0 / 1024.0} MB, {DeviceGPUInfo?.MaxRefreshRate}";
+        public string DeviceGPUSpecifications => $"Объем {DeviceGPUInfo?.VideoRAM / 1024.0 / 1024.0} MB, Частота обновления {DeviceGPUInfo?.MaxRefreshRate}";
 
         [ObservableProperty]
         [NotifyPropertyChangedFor(nameof(DeviceRAMSpecifications))]

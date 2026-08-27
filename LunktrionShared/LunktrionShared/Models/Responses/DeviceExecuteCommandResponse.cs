@@ -4,6 +4,8 @@
         string Command,
         string Output,
         string TargetDeviceId,
-        string RequestorDeviceId
+        string RequestorDeviceId,
+        DateTime RequestedAt,
+        DateTime ExecutedAt
     );
 }

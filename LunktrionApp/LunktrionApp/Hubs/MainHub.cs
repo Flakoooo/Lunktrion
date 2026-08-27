@@ -17,6 +17,7 @@ namespace LunktrionApp.Hubs
         public event Action<bool>? ConnectionStatusChanged;
 
         public event Action<DeviceIdentity>? DeviceConnected;
+        public event Action<string>? DeviceDisconnected;
 
         public event Action<DeviceInfoRequest>? DeviceInfoRequestReceived;
         public event Action<DeviceInfoResponse>? DeviceInfoReceived;
@@ -29,7 +30,7 @@ namespace LunktrionApp.Hubs
         public MainHub()
         {
             _connection = new HubConnectionBuilder()
-                .WithUrl("http://localhost:50000/mainhub")
+                .WithUrl($"{BuildConfig.ApiBaseUrl}/mainhub")
                 .WithAutomaticReconnect()
                 .Build();
 
@@ -56,10 +57,16 @@ namespace LunktrionApp.Hubs
                 ErrorReceived?.Invoke(error);
             });
 
-            // Прослушивание подключение новых девайсов
+            // Прослушивание подключения новых девайсов
             _connection.On<DeviceIdentity>("DeviceOnline", (device) =>
             {
                 DeviceConnected?.Invoke(device);
+            });
+
+            // Прослушивание отключения новых девайсов
+            _connection.On<string>("DeviceOffline", (deviceId) =>
+            {
+                DeviceDisconnected?.Invoke(deviceId);
             });
 
             // ЗАПРОС ИНФОРМАЦИИ О УСТРЙОСТВЕ

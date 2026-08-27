@@ -3,6 +3,12 @@
     public record class DeviceExecuteCommandRequest(
         string TargetDeviceId,
         string RequestorDeviceId,
-        string Command
-    );
+        string Command,
+        DateTime RequestedAt
+    )
+    {
+        public DeviceExecuteCommandRequest(
+            string TargetDeviceId, string RequestorDeviceId, string Command
+        ) : this(TargetDeviceId, RequestorDeviceId, Command, DateTime.Now) { }
+    }
 }

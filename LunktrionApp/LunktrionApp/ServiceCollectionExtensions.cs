@@ -16,7 +16,7 @@ namespace LunktrionApp
             // API
             collection.AddHttpClient<MainApi>(client =>
             {
-                client.BaseAddress = new Uri("http://localhost:50000/api/");
+                client.BaseAddress = new Uri($"{BuildConfig.ApiBaseUrl}/api/");
             });
             collection.AddSingleton<MainHub>();
 
