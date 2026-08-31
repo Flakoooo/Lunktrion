@@ -5,7 +5,6 @@ using LunktrionApp.Hubs;
 using LunktrionApp.Services;
 using LunktrionShared.Models.Entities;
 using System;
-using System.Collections.Generic;
 using System.Collections.ObjectModel;
 using System.Linq;
 using System.Threading.Tasks;
@@ -76,7 +75,7 @@ namespace LunktrionApp.ViewModels
 
             if (disconnectedDevice is not null)
             {
-                Devices.Remove(disconnectedDevice);
+                Dispatcher.UIThread.Post(() => Devices.Remove(disconnectedDevice));
             }
         }
 

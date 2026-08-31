@@ -1,11 +1,13 @@
-﻿using LunktrionApp.Models.Entities;
-using LunktrionShared.Models.Entities;
+﻿using LunktrionShared.Models.Entities;
+using LunktrionShared.Models.Interfaces;
 using LunktrionShared.Models.Requests;
 using LunktrionShared.Models.Responses;
+using LunktrionShared.Models.Utils;
 using Microsoft.AspNetCore.SignalR.Client;
 using System;
 using System.Diagnostics;
 using System.Threading.Tasks;
+using Tmds.DBus.Protocol;
 
 namespace LunktrionApp.Hubs
 {
@@ -13,8 +15,10 @@ namespace LunktrionApp.Hubs
     {
         private readonly HubConnection _connection;
 
-        public event Action<string>? ErrorReceived;
         public event Action<bool>? ConnectionStatusChanged;
+
+        public event Action<string>? NotificationReceived;
+        public event Action<string>? ErrorReceived;
 
         public event Action<DeviceIdentity>? DeviceConnected;
         public event Action<string>? DeviceDisconnected;
@@ -51,46 +55,52 @@ namespace LunktrionApp.Hubs
                 Debug.WriteLine($"Connection reconnected: {connectionId}");
             };
 
-            // Прослушивание входящих ошибок
-            _connection.On<string>("Error", (error) =>
+            // Прослушивание входящих уведомлений
+            _connection.On<string>(HubCommands.Notification, (message) =>
             {
-                ErrorReceived?.Invoke(error);
+                NotificationReceived?.Invoke(message);
+            });
+
+            // Прослушивание входящих ошибок
+            _connection.On<string>(HubCommands.Error, (message) =>
+            {
+                ErrorReceived?.Invoke(message);
             });
 
             // Прослушивание подключения новых девайсов
-            _connection.On<DeviceIdentity>("DeviceOnline", (device) =>
+            _connection.On<DeviceIdentity>(HubCommands.DeviceOnline, (device) =>
             {
                 DeviceConnected?.Invoke(device);
             });
 
             // Прослушивание отключения новых девайсов
-            _connection.On<string>("DeviceOffline", (deviceId) =>
+            _connection.On<string>(HubCommands.DeviceOffline, (deviceId) =>
             {
                 DeviceDisconnected?.Invoke(deviceId);
             });
 
             // ЗАПРОС ИНФОРМАЦИИ О УСТРЙОСТВЕ
             // Прослушивание входящих запрсов на передачу информации
-            _connection.On<DeviceInfoRequest>("CollectAndSendInfo", (request) => 
+            _connection.On<DeviceInfoRequest>(HubCommands.CollectAndSendInfo, (request) => 
             {
                 DeviceInfoRequestReceived?.Invoke(request);
             });
 
             // Прослушивание входящих результатов информации
-            _connection.On<DeviceInfoResponse>("DeviceInfoReceived", (response) =>
+            _connection.On<DeviceInfoResponse>(HubCommands.DeviceInfoReceived, (response) =>
             {
                 DeviceInfoReceived?.Invoke(response);
             });
 
             // ВЫПОЛНЕНИЕ КОМАНД
             // Прослушивание входящих команд
-            _connection.On<DeviceExecuteCommandRequest>("ExecuteCommand", (request) =>
+            _connection.On<DeviceExecuteCommandRequest>(HubCommands.ExecuteCommand, (request) =>
             {
                 CommandReceived?.Invoke(request);
             });
 
             // Прослушивание входящих результатов выполнения команд
-            _connection.On<DeviceExecuteCommandResponse>("CommandResult", (response) =>
+            _connection.On<DeviceExecuteCommandResponse>(HubCommands.CommandResult, (response) =>
             {
                 CommandResultReceived?.Invoke(response);
             });
@@ -104,7 +114,10 @@ namespace LunktrionApp.Hubs
 
                 ConnectionStatusChanged?.Invoke(IsConnected);
 
-                await _connection.InvokeAsync("RegisterDevice", currentDevice);
+                await _connection.InvokeAsync(
+                    nameof(IHubContract.RegisterDevice), 
+                    currentDevice
+                );
             }
         }
 
@@ -113,7 +126,7 @@ namespace LunktrionApp.Hubs
             if (_connection is not null && _connection.State is HubConnectionState.Connected)
             {
                 await _connection.SendAsync(
-                    "RequestDeviceInfo",
+                    nameof(IHubContract.RequestDeviceInfo),
                     new DeviceInfoRequest(targetDeviceId, currentDeviceId)
                 );
             }
@@ -124,7 +137,7 @@ namespace LunktrionApp.Hubs
             if (_connection.State is HubConnectionState.Connected)
             {
                 await _connection.SendAsync(
-                    "ReceiveDeviceInfo", 
+                    nameof(IHubContract.ReceiveDeviceInfo), 
                     response
                 );
             }
@@ -135,7 +148,7 @@ namespace LunktrionApp.Hubs
             if (_connection.State is HubConnectionState.Connected)
             {
                 await _connection.SendAsync(
-                    "RequestDeviceCommand", 
+                    nameof(IHubContract.RequestDeviceCommand), 
                     new DeviceExecuteCommandRequest(targetDeviceId, currentDeviceId, command)
                 );
             }
@@ -146,7 +159,8 @@ namespace LunktrionApp.Hubs
             if (_connection.State is HubConnectionState.Connected)
             {
                 await _connection.SendAsync(
-                    "ReceiveCommandResult", response
+                    nameof(IHubContract.ReceiveCommandResult), 
+                    response
                 );
             }
         }

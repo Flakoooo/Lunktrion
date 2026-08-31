@@ -1,8 +1,10 @@
 ﻿using LunktrionApi.Models.Entities;
 using LunktrionApi.Services;
 using LunktrionShared.Models.Entities;
+using LunktrionShared.Models.Interfaces;
 using LunktrionShared.Models.Requests;
 using LunktrionShared.Models.Responses;
+using LunktrionShared.Models.Utils;
 using Microsoft.AspNetCore.SignalR;
 using System.Text;
 using System.Text.Json;
@@ -13,23 +15,20 @@ namespace LunktrionApi.Hubs
         DeviceRegistry deviceRegistry, 
         RabbitMqService rabbitMqService,
         ILogger<MainHub> logger
-    ) : Hub
+    ) : Hub, IHubContract
     {
         private readonly DeviceRegistry _deviceRegistry = deviceRegistry;
         private readonly RabbitMqService _rabbitMqService = rabbitMqService;
         private readonly ILogger<MainHub> _logger = logger;
-
-        private const string INFO_RECEIVED_MESSAGE = "DeviceInfoReceived";
-
-        private const string EXECUTE_COMMAND_MESSAGE = "ExecuteCommand";
-        private const string COMMAND_RESULT_MESSAGE = "CommandResult";
 
         public override async Task OnDisconnectedAsync(Exception? exception)
         {
             var device = _deviceRegistry.Remove(Context.ConnectionId);
             if (device is not null)
             {
-                await Clients.All.SendAsync("DeviceOffline", device.DeviceId);
+                await Clients.All.SendAsync(
+                    HubCommands.DeviceOffline, device.DeviceId
+                );
 
                 if (_logger.IsEnabled(LogLevel.Information))
                 {
@@ -53,29 +52,47 @@ namespace LunktrionApi.Hubs
             await base.OnDisconnectedAsync(exception);
         }
 
-        private async Task ExecuteErrorMessage(string targetDeviceId)
+        private async Task ExecuteErrorMessageAsync(string errorMessage, string errorLogMessage)
         {
-            await Clients.Caller.SendAsync("Error", $"Устройство {targetDeviceId} не в сети");
+            await Clients.Caller.SendAsync(
+                HubCommands.Error,
+                errorMessage
+            );
 
             if (_logger.IsEnabled(LogLevel.Information))
             {
-                _logger.LogInformation("Устройство {TargetDeviceId} не в сети", targetDeviceId);
+                _logger.LogInformation("Ошибка: {Message}", errorLogMessage);
             }
         }
 
-        // ОТПРАВКА СООБЩЕНИЙ КЛИЕНТАМ
+        private async Task<bool> CheckReceivedCommandAsync(string command, DeviceIdentity device)
+        {
+            if (device.OperatingSystemName.Contains("Windows", StringComparison.Ordinal))
+            {
+                if (WindowsValidator.IsSafe(command))
+                {
+                    return true;
+                }
 
-        /// <summary>
-        /// Регистрационный метод для устройств. Необходимо его вызвать для уведомления всех о новом устрйостве в системе
-        /// </summary>
-        /// <param name="device">Регистрируемый девайс, который подключается к системе</param>
-        /// <returns></returns>
+                await ExecuteErrorMessageAsync(
+                    "Данная команда запрещена",
+                    "Попытка вызова запрещенной команды на Windows"
+                );
+
+                return false;
+            }
+
+            return false;
+        }
+
+        // ОТПРАВКА СООБЩЕНИЙ КЛИЕНТАМ
+                
         public async Task RegisterDevice(DeviceIdentity device)
         {
             if (_deviceRegistry.Register(device, Context.ConnectionId))
             {
                 await Clients.All.SendAsync(
-                    "DeviceOnline", 
+                    HubCommands.DeviceOnline, 
                     new DeviceIdentity(
                         device.DeviceId, 
                         device.DeviceName, 
@@ -92,7 +109,9 @@ namespace LunktrionApi.Hubs
                 var cachedCommandResponse = await _deviceRegistry.TryGetCachedDeviceExecuteCommandResponseAsync(device.DeviceId);
                 if (cachedCommandResponse is not null)
                 {
-                    await Clients.Caller.SendAsync(COMMAND_RESULT_MESSAGE, cachedCommandResponse);
+                    await Clients.Caller.SendAsync(
+                        HubCommands.CommandResult, cachedCommandResponse
+                    );
 
                     if (_logger.IsEnabled(LogLevel.Information))
                     {
@@ -128,7 +147,9 @@ namespace LunktrionApi.Hubs
                         {
                             try
                             {
-                                await Clients.Caller.SendAsync(EXECUTE_COMMAND_MESSAGE, archivedRequest);
+                                await Clients.Caller.SendAsync(
+                                    HubCommands.ExecuteCommand, archivedRequest
+                                );
 
                                 await channel.BasicAckAsync(deliveryTag: result.DeliveryTag, multiple: false);
 
@@ -164,18 +185,14 @@ namespace LunktrionApi.Hubs
                 _logger.LogWarning("Устройство {DeviceId} не удалось подключить", device.DeviceId);
             }
         }
-
-        /// <summary>
-        /// Метод для запроса краткой информации о устройстве (CPU, GPU, RAM и память)
-        /// </summary>
-        /// <param name="targetDeviceId">Id устройства, у которого запрашивается информация</param>
-        /// <returns></returns>
+                
         public async Task RequestDeviceInfo(DeviceInfoRequest request)
         {
             var targetDevice = _deviceRegistry.GetActiveDeviceByDeviceId(request.TargetDeviceId);
             if (targetDevice is null)
             {
-                await ExecuteErrorMessage(request.TargetDeviceId);
+                string error = $"Устройство {request.TargetDeviceId} не в сети";
+                await ExecuteErrorMessageAsync(error, error);
                 return;
             }
 
@@ -183,7 +200,7 @@ namespace LunktrionApi.Hubs
             if (cachedInfo is not null)
             {
                 await Clients.Caller.SendAsync(
-                    INFO_RECEIVED_MESSAGE, 
+                    HubCommands.DeviceInfoReceived, 
                     new DeviceInfoResponse(cachedInfo, request.TargetDeviceId, request.RequestorDeviceId)
                 );
 
@@ -196,49 +213,65 @@ namespace LunktrionApi.Hubs
             }
 
             await Clients.Client(targetDevice.ConnectionId).SendAsync(
-                "CollectAndSendInfo",
-                request
+                HubCommands.CollectAndSendInfo, request
             );
 
             if (_logger.IsEnabled(LogLevel.Information))
                 _logger.LogInformation("Запрошена информация о устройстве {TargetDeviceId}", request.TargetDeviceId);
         }
 
-        /// <summary>
-        /// Метод для выполнения команды на требуемом устройстве
-        /// </summary>
-        /// <param name="targetDeviceId">Id устройства, у которого нужно выполнить команду</param>
-        /// <param name="command">Команда, которая должна выполнить на устройстве</param>
-        /// <returns></returns>
         public async Task RequestDeviceCommand(DeviceExecuteCommandRequest request)
         {
             var targetDevice = _deviceRegistry.GetActiveDeviceByDeviceId(request.TargetDeviceId);
             if (targetDevice is null)
             {
+                var device = _deviceRegistry.GetDeviceByDeviceId(request.TargetDeviceId);
+                if (device is null)
+                {
+                    await ExecuteErrorMessageAsync(
+                        "Неизвестное устройство",
+                        $"Устройство с ID {request.TargetDeviceId} неизвестно. Отмена выполнения отправленной команды."
+                    );
+
+                    return;
+                }
+
                 if (_logger.IsEnabled(LogLevel.Information))
                 {
                     _logger.LogInformation(
-                        "Устройство {TargetDeviceId} офлайн. Сохраняем команду в RabbitMQ.", 
+                        "Устройство {TargetDeviceId} офлайн. Сохраняем команду в RabbitMQ.",
                         request.TargetDeviceId
                     );
+                }
+
+                if (!await CheckReceivedCommandAsync(request.Command, device))
+                {
+                    return;
                 }
 
                 await _rabbitMqService.SendCommandAsync(request.TargetDeviceId, request);
 
                 await Clients.Caller.SendAsync(
-                    "Notification", 
+                    HubCommands.Notification,
                     $"Устройство {request.TargetDeviceId} сейчас не в сети. Команда поставлена в очередь и выполнится при его включении."
                 );
 
                 return;
             }
 
+            if (!await CheckReceivedCommandAsync(request.Command, targetDevice))
+            {
+                return;
+            }
+
             await Clients.Client(targetDevice.ConnectionId).SendAsync(
-                EXECUTE_COMMAND_MESSAGE, request
+                HubCommands.ExecuteCommand, request
             );
 
             if (_logger.IsEnabled(LogLevel.Information))
+            {
                 _logger.LogInformation("Запрошен вызов команды на устройстве {TargetDeviceId}", request.TargetDeviceId);
+            }
         }
 
         public async Task RequestBrowseDirectory(string targetDeviceId, string path)
@@ -246,7 +279,8 @@ namespace LunktrionApi.Hubs
             var targetDevice = _deviceRegistry.GetActiveDeviceByDeviceId(targetDeviceId);
             if (targetDevice is null)
             {
-                await ExecuteErrorMessage(targetDeviceId);
+                string error = $"Устройство {targetDeviceId} не в сети";
+                await ExecuteErrorMessageAsync(error, error);
                 return;
             }
 
@@ -256,24 +290,22 @@ namespace LunktrionApi.Hubs
 
         // ПОЛУЧЕНИЕ ОТВЕТА ОТ КЛИЕНТА
 
-        /// <summary>
-        /// Метод возвращающий краткую информацию о устройстве
-        /// </summary>
-        /// <param name="response">Информация, которую собрало устройство</param>
-        /// <returns></returns>
         public async Task ReceiveDeviceInfo(DeviceInfoResponse response)
         {
             var targetDevice = _deviceRegistry.GetActiveDeviceByDeviceId(response.RequestorDeviceId);
             if (targetDevice is null)
             {
-                await ExecuteErrorMessage(response.RequestorDeviceId);
+                string error = $"Устройство {response.RequestorDeviceId} не в сети";
+                await ExecuteErrorMessageAsync(error, error);
+
                 return;
             }
 
             await _deviceRegistry.SetDeviceInfoInCacheAsync(response);
 
-            await Clients.Client(targetDevice.ConnectionId)
-                .SendAsync(INFO_RECEIVED_MESSAGE, response);
+            await Clients.Client(targetDevice.ConnectionId).SendAsync(
+                HubCommands.DeviceInfoReceived, response
+            );
 
             if (_logger.IsEnabled(LogLevel.Information))
             {
@@ -283,26 +315,23 @@ namespace LunktrionApi.Hubs
                 );
             }
         }
-
-        /// <summary>
-        /// Метод возвращающий результат выполненной команды на устройстве
-        /// </summary>
-        /// <param name="response">Результат выполненой команды на устройстве</param>
-        /// <returns></returns>
+                
         public async Task ReceiveCommandResult(DeviceExecuteCommandResponse response)
         {
             var targetDevice = _deviceRegistry.GetActiveDeviceByDeviceId(response.RequestorDeviceId);
             if (targetDevice is null)
             {
-                await ExecuteErrorMessage(response.RequestorDeviceId);
+                string error = $"Устройство {response.RequestorDeviceId} не в сети";
+                await ExecuteErrorMessageAsync(error, error);
 
                 await _deviceRegistry.SetDeviceExecuteCommandResponseInCacheAsync(response);
 
                 return;
             }
 
-            await Clients.Client(targetDevice.ConnectionId)
-                .SendAsync(COMMAND_RESULT_MESSAGE, response);
+            await Clients.Client(targetDevice.ConnectionId).SendAsync(
+                HubCommands.CommandResult, response
+            );
         }
 
         public Task ReceiveBrowseResult(List<FileSystemEntry> entries, string requestorConnectionId)

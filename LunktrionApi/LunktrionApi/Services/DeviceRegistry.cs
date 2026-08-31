@@ -89,9 +89,9 @@ namespace LunktrionApi.Services
         public IReadOnlyCollection<DeviceIdentity> GetAllDevices() 
             => _allDevices.Values.Select(d => new DeviceIdentity(
                 d.DeviceId, 
-                d.DeviceName, 
-                d.DeviceManufacturer, 
-                d.OperatingSystemName
+                d.DeviceName,
+                d.OperatingSystemName,
+                d.DeviceManufacturer
             ))
             .ToList().AsReadOnly();
 
@@ -99,8 +99,8 @@ namespace LunktrionApi.Services
             => _activeDevices.Values.Select(d => new DeviceIdentity(
                 d.DeviceId,
                 d.DeviceName,
-                d.DeviceManufacturer,
-                d.OperatingSystemName
+                d.OperatingSystemName,
+                d.DeviceManufacturer
             ))
             .ToList().AsReadOnly();
 
