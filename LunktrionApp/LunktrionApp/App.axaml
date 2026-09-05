@@ -20,6 +20,10 @@
             <views:ActiveDevicesList/>
         </DataTemplate>
 
+        <DataTemplate DataType="{x:Type vm:NotificationViewModel}">
+            <views:NotificationView />
+        </DataTemplate>
+
         <DataTemplate DataType="{x:Type vm:DeviceViewModel}">
             <views:DeviceView/>
         </DataTemplate>

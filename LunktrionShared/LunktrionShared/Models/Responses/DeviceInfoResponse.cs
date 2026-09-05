@@ -3,8 +3,11 @@
 namespace LunktrionShared.Models.Responses
 {
     public record class DeviceInfoResponse(
-        DeviceInfo Info,
         string TargetDeviceId,
-        string RequestorDeviceId
+        string RequestorDeviceId,
+        List<DeviceCPUInfo> CPUInfos,
+        List<DeviceGPUInfo> GPUInfos,
+        List<DeviceRAMInfo> RAMInfos,
+        List<DeviceDriveInfo> DriveInfos
     );
 }

@@ -59,7 +59,7 @@ namespace LunktrionApp.ViewModels
 
         private void OnDeviceConnected(DeviceIdentity newDevice)
         {
-            if (!Devices.Any(d => string.Equals(d.DeviceId, newDevice.DeviceId, StringComparison.Ordinal)))
+            if (!Devices.Any(d => string.Equals(d.DeviceUUID, newDevice.DeviceUUID, StringComparison.Ordinal)))
             {
                 Dispatcher.UIThread.Post(() => Devices.Add(newDevice));
             }
@@ -69,7 +69,7 @@ namespace LunktrionApp.ViewModels
         {
             var disconnectedDevice = Devices.FirstOrDefault(
                 d => string.Equals(
-                    d.DeviceId, disconnectedDeviceId, StringComparison.Ordinal
+                    d.DeviceUUID, disconnectedDeviceId, StringComparison.Ordinal
                 )
             );
 

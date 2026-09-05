@@ -35,13 +35,13 @@ namespace LunktrionApp.ViewModels
         {
             get
             {
-                if (string.IsNullOrWhiteSpace(SelectedDevice?.DeviceId)) 
+                if (string.IsNullOrWhiteSpace(SelectedDevice?.DeviceUUID)) 
                     return null;
 
-                if (!Logs.TryGetValue(SelectedDevice.DeviceId, out var _))
-                    Logs[SelectedDevice.DeviceId] = [];
+                if (!Logs.TryGetValue(SelectedDevice.DeviceUUID, out var _))
+                    Logs[SelectedDevice.DeviceUUID] = [];
 
-                return Logs[SelectedDevice.DeviceId];
+                return Logs[SelectedDevice.DeviceUUID];
             }
         }
 
@@ -71,7 +71,7 @@ namespace LunktrionApp.ViewModels
 
             if (device is not null)
             {
-                if (!string.Equals(currentDevice.DeviceId, device.DeviceId, StringComparison.Ordinal))
+                if (!string.Equals(currentDevice.DeviceUUID, device.DeviceUUID, StringComparison.Ordinal))
                 {
                     SelectedDevice = device;
                 }
@@ -137,12 +137,12 @@ namespace LunktrionApp.ViewModels
                 var commandText = CommandInput;
                 Dispatcher.UIThread.Post(() =>
                 {
-                    AddNewLog(SelectedDevice.DeviceId, CommandInput, ConsoleMessageType.Command);
+                    AddNewLog(SelectedDevice.DeviceUUID, CommandInput, ConsoleMessageType.Command);
                     CommandInput = null;
                 });
 
                 await _mainHub.ExecuteCommandAsync(
-                    SelectedDevice.DeviceId, CommandInput, currentDevice.DeviceId
+                    SelectedDevice.DeviceUUID, CommandInput, currentDevice.DeviceUUID
                 );
             }
         }
@@ -151,7 +151,7 @@ namespace LunktrionApp.ViewModels
         {
             var currentDevice = await _deviceIdentityService.GetCurrentDeviceAsync();
 
-            if (!string.Equals(currentDevice.DeviceId, response.RequestorDeviceId, StringComparison.Ordinal))
+            if (!string.Equals(currentDevice.DeviceUUID, response.RequestorDeviceId, StringComparison.Ordinal))
                 return;
 
             Dispatcher.UIThread.Post(() =>

@@ -42,69 +42,114 @@
             </Border>
             <Grid Grid.Row="1" ColumnDefinitions="70*, 30*" Margin="20">
                 <StackPanel Grid.Column="0" Spacing="20">
-                    <StackPanel Orientation="Horizontal" Spacing="12">
-                        <ic:FluentIcon Icon="DesktopFlow" 
+                    <Grid ColumnDefinitions="10*, 90*" ColumnSpacing="12">
+                        <ic:FluentIcon Grid.Column="0"
+                                       Icon="DesktopFlow" 
                                        IconVariant="Filled" 
                                        IconSize="Size20" 
                                        FontSize="100"
                                        Foreground="#FF8033" 
-                                       HorizontalAlignment="Center" 
-                                       VerticalAlignment="Center" />
-                        <StackPanel VerticalAlignment="Center">
-                            <TextBlock FontSize="32" Foreground="#F5E6D8" Text="{Binding DeviceCPUInfo.Name}" />
-                            <TextBlock FontSize="24" Foreground="#A8998D" Text="{Binding DeviceCPUSpecifications}" />
-                        </StackPanel>
-                    </StackPanel>
-                    <StackPanel Orientation="Horizontal" Spacing="12">
-                        <ic:FluentIcon Icon="DesktopCursor" 
+                                       VerticalAlignment="Top" />
+                        <ItemsControl Grid.Column="1" ItemsSource="{Binding DeviceCPUInfos}">
+                            <ItemsControl.ItemsPanel>
+                                <ItemsPanelTemplate>
+                                    <StackPanel Orientation="Vertical" Spacing="12"/> 
+                                </ItemsPanelTemplate>
+                            </ItemsControl.ItemsPanel>
+                            <ItemsControl.ItemTemplate>
+                                <DataTemplate>
+                                    <StackPanel>
+                                        <TextBlock FontSize="32" Foreground="#F5E6D8" Text="{Binding Name}" />
+                                        <TextBlock FontSize="24" Foreground="#A8998D" Text="{Binding SpecificationText}" />
+                                    </StackPanel>
+                                </DataTemplate>
+                            </ItemsControl.ItemTemplate>
+                        </ItemsControl>
+                    </Grid>
+                    <Grid ColumnDefinitions="10*, 90*" ColumnSpacing="12">
+                        <ic:FluentIcon Grid.Column="0"
+                                       Icon="DesktopCursor" 
                                        IconVariant="Filled" 
                                        IconSize="Size20" 
                                        FontSize="100"
                                        Foreground="#FF8033" 
-                                       HorizontalAlignment="Center" 
-                                       VerticalAlignment="Center" />
-                        <StackPanel VerticalAlignment="Center">
-                            <TextBlock FontSize="32" Foreground="#F5E6D8" Text="{Binding DeviceGPUInfo.Name}" />
-                            <TextBlock FontSize="24" Foreground="#A8998D" Text="{Binding DeviceGPUSpecifications}" />
-                        </StackPanel>
-                    </StackPanel>
-                    <StackPanel Orientation="Horizontal" Spacing="12">
-                        <ic:FluentIcon Icon="Memory" 
+                                       VerticalAlignment="Top" />
+                        <ItemsControl Grid.Column="1" ItemsSource="{Binding DeviceGPUInfos}">
+                            <ItemsControl.ItemsPanel>
+                                <ItemsPanelTemplate>
+                                    <StackPanel Orientation="Vertical" Spacing="12"/> 
+                                </ItemsPanelTemplate>
+                            </ItemsControl.ItemsPanel>
+                            <ItemsControl.ItemTemplate>
+                                <DataTemplate>
+                                    <StackPanel>
+                                        <TextBlock FontSize="32" Foreground="#F5E6D8" Text="{Binding Name}" />
+                                        <TextBlock FontSize="24" Foreground="#A8998D" Text="{Binding SpecificationText}" />
+                                    </StackPanel>
+                                </DataTemplate>
+                            </ItemsControl.ItemTemplate>
+                        </ItemsControl>
+                    </Grid>
+                    <Grid ColumnDefinitions="10*, 90*" ColumnSpacing="12">
+                        <ic:FluentIcon Grid.Column="0"
+                                       Icon="Memory" 
                                        IconVariant="Filled" 
                                        IconSize="Size16" 
                                        FontSize="100"
                                        Foreground="#FF8033" 
-                                       HorizontalAlignment="Center" 
-                                       VerticalAlignment="Center" />
-                        <StackPanel VerticalAlignment="Center">
-                            <TextBlock FontSize="32" Foreground="#F5E6D8" Text="ОЗУ" />
-                            <TextBlock FontSize="24" Foreground="#A8998D" Text="{Binding DeviceRAMSpecifications}" />
-                        </StackPanel>
-                    </StackPanel>
-                    <StackPanel Orientation="Horizontal" Spacing="12">
-                        <ic:FluentIcon Icon="HardDrive" 
-                                        IconVariant="Filled" 
-                                        IconSize="Size20" 
-                                        FontSize="100"
-                                        Foreground="#FF8033" 
-                                        HorizontalAlignment="Center" 
-                                        VerticalAlignment="Center" />
-                        <StackPanel VerticalAlignment="Center">
-                            <TextBlock FontSize="32" Foreground="#F5E6D8" Text="Диски" />
-                            <TextBlock FontSize="24" Foreground="#A8998D" Text="{Binding DeviceDriveSpecifications}" />
-                        </StackPanel>
-                    </StackPanel>
+                                       VerticalAlignment="Top" />
+                        <ItemsControl Grid.Column="1" ItemsSource="{Binding DeviceRAMInfos}">
+                            <ItemsControl.ItemsPanel> 
+                                <ItemsPanelTemplate> 
+                                    <StackPanel Orientation="Vertical" Spacing="12"/> 
+                                </ItemsPanelTemplate> 
+                            </ItemsControl.ItemsPanel> 
+                            <ItemsControl.ItemTemplate> 
+                                <DataTemplate>
+                                    <StackPanel>
+                                        <TextBlock FontSize="32" Foreground="#F5E6D8" Text="{Binding Manufacturer}" />
+                                        <TextBlock FontSize="24" Foreground="#A8998D" Text="{Binding SpecificationText}" />
+                                    </StackPanel> 
+                                </DataTemplate> 
+                            </ItemsControl.ItemTemplate> 
+                        </ItemsControl> 
+                    </Grid>
+                    <Grid ColumnDefinitions="10*, 90*" ColumnSpacing="12">
+                        <ic:FluentIcon Grid.Column="0"
+                                       Icon="HardDrive"  
+                                       IconVariant="Filled"  
+                                       IconSize="Size20" 
+                                       FontSize="100"
+                                       Foreground="#FF8033" 
+                                       VerticalAlignment="Top" />
+                        <ItemsControl Grid.Column="1" ItemsSource="{Binding DeviceDriveInfos}">
+                            <ItemsControl.ItemsPanel> 
+                                <ItemsPanelTemplate> 
+                                    <StackPanel Orientation="Vertical" Spacing="12"/> 
+                                </ItemsPanelTemplate> 
+                            </ItemsControl.ItemsPanel> 
+                            <ItemsControl.ItemTemplate> 
+                                <DataTemplate>
+                                    <StackPanel>
+                                        <TextBlock FontSize="32" Foreground="#F5E6D8" Text="{Binding Caption}" />
+                                        <TextBlock FontSize="24" Foreground="#A8998D" Text="{Binding SpecificationText}" />
+                                    </StackPanel>  
+                                </DataTemplate>  
+                            </ItemsControl.ItemTemplate>  
+                        </ItemsControl>  
+                    </Grid>
                 </StackPanel>
                 <StackPanel Grid.Column="1" Spacing="20">
                     <Button Theme="{StaticResource OrangeButton}"
-                            Content="Выполнить команду на устройстве"
-                            IsVisible="{Binding IsCurrentDevice}" />
+                            Content="Обновить данные об устройстве" />
                     <Button Theme="{StaticResource OrangeButton}"
+                            Content="Выполнить команду на устройстве"
+                            IsVisible="{Binding !IsCurrentDevice}" />
+                    <!-- <Button Theme="{StaticResource OrangeButton}"
                             Content="Получить снимок экрана"
-                            IsVisible="{Binding !IsCurrentDevice}" />
+                            IsVisible="{Binding !IsCurrentDevice}" /> -->
                     <Button Theme="{StaticResource RedButton}"
-                            Content="Выключить устройство"
-                            IsVisible="{Binding !IsCurrentDevice}" />
+                            Content="Выключить устройство" />
                 </StackPanel>
             </Grid>
         </Grid>

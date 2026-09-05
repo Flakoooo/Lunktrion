@@ -1,5 +1,8 @@
+using LunktrionApi.Background;
+using LunktrionApi.Data;
 using LunktrionApi.Hubs;
 using LunktrionApi.Services;
+using Microsoft.EntityFrameworkCore;
 
 namespace LunktrionApi;
 
@@ -12,6 +15,25 @@ public class Program
         // Add services to the container.
         //builder.Services.AddAuthorization();
 
+        var connectionPostgreSQL = builder.Configuration.GetConnectionString("PostgreSQL");
+        if (string.IsNullOrWhiteSpace(connectionPostgreSQL))
+        {
+            Console.WriteLine("Строка подключения к PostgreSQL не указана");
+            throw new InvalidOperationException("Не указана строка подключения к PostgreSQL");
+        }
+
+        builder.Services.AddDbContextFactory<AppDbContext>(options =>
+        {
+            options.UseNpgsql(connectionPostgreSQL);
+        });
+
+        var connectionRedis = builder.Configuration.GetConnectionString("Redis");
+        if (string.IsNullOrWhiteSpace(connectionPostgreSQL))
+        {
+            Console.WriteLine("Строка подключения к Redis не указана");
+            throw new InvalidOperationException("Не указана строка подключения к Redis");
+        }
+
         builder.Services.AddStackExchangeRedisCache(options =>
         {
             options.Configuration = builder.Configuration.GetConnectionString("Redis");
@@ -21,8 +43,10 @@ public class Program
         builder.Services.AddSingleton<RabbitMqService>();
         builder.Services.AddSingleton<RedisService>();
 
-        builder.Services.AddSingleton<DeviceRegistry>();
+        builder.Services.AddSingleton<DeviceService>();
         builder.Services.AddScoped<MainService>();
+
+        builder.Services.AddHostedService<AppInitializersRunner>();
 
         builder.Services.AddControllers();
 
@@ -32,6 +56,14 @@ public class Program
         builder.Services.AddOpenApi();
 
         var app = builder.Build();
+
+        using (var scope = app.Services.CreateScope())
+        {
+            var factory = scope.ServiceProvider.GetRequiredService<IDbContextFactory<AppDbContext>>();
+            using var db = factory.CreateDbContext();
+
+            db.Database.Migrate();
+        }
 
         app.MapControllers();
 

@@ -1,21 +1,18 @@
-﻿using LunktrionShared.Models.Entities;
+﻿using LunktrionShared.Models.Enums;
 
 namespace LunktrionApi.Models.Entities
 {
     public record class ActiveDevice(
-        string DeviceId, string DeviceName, string OperatingSystemName, string DeviceManufacturer,
-        string ConnectionId, DateTime ConnectedAt
-    ) : DeviceIdentity(
-        DeviceId, DeviceName, OperatingSystemName, DeviceManufacturer
-    )
+        Guid DeviceId,
+        string DeviceUUID, 
+        OperatingSystemType OperatingSystemType,
+        string ConnectionId, 
+        DateTime ConnectedAt
+    ) 
     {
         public ActiveDevice(
-            string DeviceId, string DeviceName, string OperatingSystemName, string DeviceManufacturer, 
-            string ConnectionId
-        ) : this(
-            DeviceId, DeviceName, OperatingSystemName, DeviceManufacturer, 
-            ConnectionId, DateTime.Now
-        ) { }
+            Guid DeviceId, string DeviceUUID, OperatingSystemType OperatingSystemType, string ConnectionId
+        ) : this(DeviceId, DeviceUUID, OperatingSystemType, ConnectionId, DateTime.Now) { }
 
         public override int GetHashCode()
             => DeviceId.GetHashCode();

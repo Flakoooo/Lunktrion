@@ -59,10 +59,7 @@
       <ConfiguredApiUrl>$(RawEnvLine.Substring(13))</ConfiguredApiUrl>
     </PropertyGroup>
 
-    <WriteLinesToFile File="$(IntermediateOutputPath)BuildConfig.g.cs"
-                      Lines="namespace LunktrionApp%3B public static class BuildConfig { public const string ApiBaseUrl = %22$(ConfiguredApiUrl)%22%3B }"
-                      Overwrite="true"
-                      WriteOnlyWhenDifferent="true" />
+    <WriteLinesToFile File="$(IntermediateOutputPath)BuildConfig.g.cs" Lines="namespace LunktrionApp%3B public static class BuildConfig { public const string ApiBaseUrl = %22$(ConfiguredApiUrl)%22%3B }" Overwrite="true" WriteOnlyWhenDifferent="true" />
 
     <ItemGroup>
       <Compile Include="$(IntermediateOutputPath)BuildConfig.g.cs" />

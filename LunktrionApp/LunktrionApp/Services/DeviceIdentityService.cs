@@ -1,5 +1,6 @@
 ﻿using LunktrionApp.Models.Entities;
 using LunktrionShared.Models.Entities;
+using LunktrionShared.Utils;
 using System;
 using System.Linq;
 using System.Threading.Tasks;
@@ -31,15 +32,17 @@ namespace LunktrionApp.Services
             }
 
             var computerSystem = _hardwareService.Hardware.ComputerSystemList.FirstOrDefault();
+            string osName = _hardwareService.Hardware.OperatingSystem.Name;
 
             return computerSystem is null
                 ? new DeviceIdentity(
-                    OperatingSystemName: _hardwareService.Hardware.OperatingSystem.Name
+                    OperatingSystemName: osName
                 )
                 : new DeviceIdentity(
                     computerSystem.UUID, 
                     computerSystem.Name, 
-                    _hardwareService.Hardware.OperatingSystem.Name, 
+                    OperatingSystemIdentifier.Check(osName),
+                    osName, 
                     computerSystem.Vendor
                 );
         }

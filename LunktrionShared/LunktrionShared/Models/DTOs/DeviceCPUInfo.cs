@@ -2,9 +2,10 @@
 {
     public record class DeviceCPUInfo(
         string Name = "ОШИБКА",
-        uint NumberOfCores = 0,
-        uint NumberOfLogicalProcessors = 0,
-        uint CurrentClockSpeed = 0,
-        uint MaxClockSpeed = 0
-    );
+        short NumberOfCores = 0,
+        short NumberOfLogicalProcessors = 0
+    )
+    {
+        public string SpecificationText => $"Ядер {NumberOfCores}, Потоков {NumberOfLogicalProcessors}";
+    }
 }

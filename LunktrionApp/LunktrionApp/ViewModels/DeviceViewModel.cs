@@ -2,13 +2,17 @@
 using Avalonia.Threading;
 using CommunityToolkit.Mvvm.ComponentModel;
 using CommunityToolkit.Mvvm.Input;
+using LunktrionApp.Api;
 using LunktrionApp.Hubs;
 using LunktrionApp.Models.Interfaces;
 using LunktrionApp.Services;
 using LunktrionShared.Models.DTOs;
 using LunktrionShared.Models.Entities;
+using LunktrionShared.Models.Enums;
 using LunktrionShared.Models.Responses;
 using System;
+using System.Collections.ObjectModel;
+using System.Linq;
 using System.Threading.Tasks;
 
 namespace LunktrionApp.ViewModels
@@ -16,10 +20,10 @@ namespace LunktrionApp.ViewModels
     public partial class DeviceViewModel : ViewModelBase, IDisposable, IAsyncInitializable<DeviceIdentity?>
     {
         private readonly MainHub _mainHub;
+        private readonly MainApi _mainApi;
         private readonly NavigationService _navigationService;
         private readonly DeviceIdentityService _identityService;
         private readonly DeviceInfoService _infoService;
-        private readonly CommandExecutorService _commandExecutorService;
 
         public DeviceIdentity? CurrentDevice { get; set; }
 
@@ -32,27 +36,32 @@ namespace LunktrionApp.ViewModels
         public string IsConnectedText => $"{(IsConnected ? "В" : "Не в")} сети";
         public string IsConnectedColor => IsConnected ? "#5FA866" : "#D95C4A";
 
+        public ObservableCollection<DeviceCPUInfo> DeviceCPUInfos { get; set; } = [];
+        public ObservableCollection<DeviceGPUInfo> DeviceGPUInfos { get; set; } = [];
+        public ObservableCollection<DeviceRAMInfo> DeviceRAMInfos { get; set; } = [];
+        public ObservableCollection<DeviceDriveInfo> DeviceDriveInfos { get; set; } = [];
+
+
         [ObservableProperty]
         [NotifyPropertyChangedFor(nameof(DeviceCPUSpecifications))]
         public partial DeviceCPUInfo? DeviceCPUInfo { get; set; }
-        public string DeviceCPUSpecifications => $"Ядер/Потоков {DeviceCPUInfo?.NumberOfCores}/{DeviceCPUInfo?.NumberOfLogicalProcessors}, " +
-            $"Текущая/Базовая частота {DeviceCPUInfo?.CurrentClockSpeed / 1000.0:F2}/{DeviceCPUInfo?.MaxClockSpeed / 1000.0:F2} GHz";
+        public string DeviceCPUSpecifications => $"Ядер/Потоков {DeviceCPUInfo?.NumberOfCores}/{DeviceCPUInfo?.NumberOfLogicalProcessors}";
 
         [ObservableProperty]
         [NotifyPropertyChangedFor(nameof(DeviceGPUSpecifications))]
         public partial DeviceGPUInfo? DeviceGPUInfo { get; set; }
-        public string DeviceGPUSpecifications => $"Объем {DeviceGPUInfo?.VideoRAM / 1024.0 / 1024.0} MB, Частота обновления {DeviceGPUInfo?.MaxRefreshRate}";
+        public string DeviceGPUSpecifications => $"Объем {DeviceGPUInfo?.VideoRAM / 1024.0 / 1024.0} MB";
 
         [ObservableProperty]
         [NotifyPropertyChangedFor(nameof(DeviceRAMSpecifications))]
         public partial DeviceRAMInfo? DeviceRAMInfo { get; set; }
-        public string DeviceRAMSpecifications => $"Тип {DeviceRAMInfo?.Type}, Объем {DeviceRAMInfo?.Size / 1024.0 / 1024.0 / 1024.0} " +
-            $"({DeviceRAMInfo?.AvailableSize / 1024.0 / 1024.0 / 1024.0:F2}) GB, Частота {DeviceRAMInfo?.Speed} MHz";
+        public string DeviceRAMSpecifications => $"Тип {DeviceRAMInfo?.Type}, Объем {DeviceRAMInfo?.Size / 1024.0 / 1024.0 / 1024.0} GB " +
+            $"Частота {DeviceRAMInfo?.Speed} MHz";
 
         [ObservableProperty]
         [NotifyPropertyChangedFor(nameof(DeviceDriveSpecifications))]
         public partial DeviceDriveInfo? DeviceDriveInfo { get; set; }
-        public string DeviceDriveSpecifications => $"Объем/Доступно {DeviceDriveInfo?.TotalSize / 1024.0 / 1024.0 / 1024.0:F2}/{DeviceDriveInfo?.AvailableSize / 1024.0 / 1024.0 / 1024.0:F2} GB, Дисков {DeviceDriveInfo?.DriversCount}";
+        public string DeviceDriveSpecifications => $"Объем/Доступно {DeviceDriveInfo?.TotalSize / 1024.0 / 1024.0 / 1024.0:F2} GB";
 
         public async Task InitializeAsync(DeviceIdentity? device = null)
         {
@@ -62,22 +71,33 @@ namespace LunktrionApp.ViewModels
                 CurrentDevice = currentDevice;
                 IsCurrentDevice = true;
 
-                DeviceCPUInfo = await _infoService.GetDeviceCPUInfoAsync();
-                DeviceGPUInfo = await _infoService.GetDeviceGPUInfoAsync();
-                DeviceRAMInfo = await _infoService.GetDeviceRAMInfoAsync();
-                DeviceDriveInfo = await _infoService.GetDeviceDriveInfoAsync();
+                DeviceCPUInfos = new ObservableCollection<DeviceCPUInfo>(await _infoService.GetDeviceCPUInfoAsync());
+                DeviceGPUInfos = new ObservableCollection<DeviceGPUInfo>(await _infoService.GetDeviceGPUInfoAsync());
+                DeviceRAMInfos = new ObservableCollection<DeviceRAMInfo>(await _infoService.GetDeviceRAMInfoAsync());
+                DeviceDriveInfos = new ObservableCollection<DeviceDriveInfo>(await _infoService.GetDeviceDriveInfoAsync());
             }
             else
             {
                 CurrentDevice = device;
-                IsCurrentDevice = CurrentDevice.DeviceId == currentDevice.DeviceId;
+                IsCurrentDevice = string.Equals(CurrentDevice.DeviceUUID, currentDevice.DeviceUUID, StringComparison.Ordinal);
 
-                await _mainHub.RequestDeviceInfoAsync(device.DeviceId, currentDevice.DeviceId);
+                var deviceInfo = await _mainApi.GetDeviceInfoAsync(CurrentDevice.DeviceUUID);
+
+                if (deviceInfo is null)
+                {
+                    return;
+                }
+
+                DeviceCPUInfos = new ObservableCollection<DeviceCPUInfo>(deviceInfo.CPUInfos);
+                DeviceGPUInfos = new ObservableCollection<DeviceGPUInfo>(deviceInfo.GPUInfos);
+                DeviceRAMInfos = new ObservableCollection<DeviceRAMInfo>(deviceInfo.RAMInfos);
+                DeviceDriveInfos = new ObservableCollection<DeviceDriveInfo>(deviceInfo.DriveInfos);
             }
         }
 
         public DeviceViewModel(
             MainHub mainHub,
+            MainApi mainApi,
             NavigationService navigationService,
             DeviceIdentityService identityService, 
             DeviceInfoService infoService,
@@ -85,10 +105,10 @@ namespace LunktrionApp.ViewModels
         )
         {
             _mainHub = mainHub;
+            _mainApi = mainApi;
             _navigationService = navigationService;
             _identityService = identityService;
             _infoService = infoService;
-            _commandExecutorService = commandExecutorService;
 
             IsConnected = _mainHub.IsConnected;
 
@@ -106,12 +126,37 @@ namespace LunktrionApp.ViewModels
             }
 
             _mainHub = null!;
+            _mainApi = null!;
             _navigationService = null!;
             _identityService = new DeviceIdentityService();
             _infoService = new DeviceInfoService();
-            _commandExecutorService = null!;
 
-            _ = InitializeAsync();
+            IsCurrentDevice = true;
+
+            CurrentDevice = new DeviceIdentity(
+                DeviceName: "Крутое название",
+                OperatingSystemType: OperatingSystemType.Windows,
+                OperatingSystemName: "Windows какой то",
+                DeviceManufacturer: "Крутой производитель"
+            );
+
+            DeviceCPUInfos = [
+                new DeviceCPUInfo("AMD Ryzen", 6, 12)
+            ];
+
+            DeviceGPUInfos = [
+                new DeviceGPUInfo("NVIDIA", 12L * 1024 * 1024 * 1024),
+                new DeviceGPUInfo("AMD", 16L * 1024 * 1024 * 1024)
+            ];
+
+            DeviceRAMInfos = [
+                new DeviceRAMInfo("ADATA", 8L * 1024 * 1024 * 1024, "DDR3", 1333),
+                new DeviceRAMInfo("ADATA", 8L * 1024 * 1024 * 1024, "DDR3", 1333)
+            ];
+
+            DeviceDriveInfos = [
+                new DeviceDriveInfo("Какой то диск HDD", 1024L * 1024 * 1024 * 1024)
+            ];
         }
 
         [RelayCommand]
@@ -131,15 +176,15 @@ namespace LunktrionApp.ViewModels
         private async void OnDeviceInfoReceived(DeviceInfoResponse response)
         {
             var currentDevice = await _identityService.GetCurrentDeviceAsync();
-            if (!string.Equals(currentDevice.DeviceId, response.RequestorDeviceId, StringComparison.Ordinal))
+            if (!string.Equals(currentDevice.DeviceUUID, response.RequestorDeviceId, StringComparison.Ordinal))
                 return;
 
             Dispatcher.UIThread.Post(() =>
             {
-                DeviceCPUInfo = response.Info.CPUInfo;
-                DeviceGPUInfo = response.Info.GPUInfo;
-                DeviceRAMInfo = response.Info.RAMInfo;
-                DeviceDriveInfo = response.Info.DriveInfo;
+                DeviceCPUInfos = new ObservableCollection<DeviceCPUInfo>(response.CPUInfos);
+                DeviceGPUInfos = new ObservableCollection<DeviceGPUInfo>(response.GPUInfos);
+                DeviceRAMInfos = new ObservableCollection<DeviceRAMInfo>(response.RAMInfos);
+                DeviceDriveInfos = new ObservableCollection<DeviceDriveInfo>(response.DriveInfos);
             });
         }
 

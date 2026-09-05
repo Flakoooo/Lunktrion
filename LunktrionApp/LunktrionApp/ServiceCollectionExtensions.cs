@@ -36,6 +36,7 @@ namespace LunktrionApp
             collection.AddSingleton<LoadingViewModel>();
             collection.AddSingleton<ActiveDevicesListViewModel>();
             collection.AddSingleton<NavigationPanelViewModel>();
+            collection.AddSingleton<NotificationViewModel>();
 
             collection.AddSingleton<MainViewModel>();
             collection.AddSingleton<IAsyncInitializable>(sp => sp.GetRequiredService<MainViewModel>());

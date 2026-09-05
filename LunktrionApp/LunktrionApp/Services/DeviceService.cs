@@ -18,7 +18,7 @@ namespace LunktrionApp.Services
         {
             if (_lastRefreshTime.AddMinutes(1) < DateTime.Now)
             {
-                _devices = (await _mainApi.GetAllDevices()).ToList();
+                _devices = (await _mainApi.GetAllDevicesAsync()).ToList();
                 _lastRefreshTime = DateTime.Now;
             }
 

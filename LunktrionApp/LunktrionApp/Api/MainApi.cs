@@ -1,4 +1,5 @@
-﻿using LunktrionShared.Models.Entities;
+﻿using LunktrionShared.Models.DTOs;
+using LunktrionShared.Models.Entities;
 using System.Collections.Generic;
 using System.Net.Http;
 using System.Text.Json;
@@ -17,7 +18,7 @@ namespace LunktrionApp.Api
             PropertyNamingPolicy = JsonNamingPolicy.CamelCase
         };
 
-        public async Task<IEnumerable<DeviceIdentity>> GetAllDevices()
+        public async Task<IEnumerable<DeviceIdentity>> GetAllDevicesAsync()
         {
             var response = await _httpClient.GetAsync("v1/device");
 
@@ -30,6 +31,21 @@ namespace LunktrionApp.Api
             var devices = JsonSerializer.Deserialize<IEnumerable<DeviceIdentity>>(content, _jsonOptions);
 
             return devices ?? [];
+        }
+
+        public async Task<DeviceInfoDTO?> GetDeviceInfoAsync(string deviceId)
+        {
+            var response = await _httpClient.GetAsync($"v1/device/{deviceId}");
+
+            if (!response.IsSuccessStatusCode)
+            {
+                return null;
+            }
+
+            var conent = await response.Content.ReadAsStringAsync();
+            var info = JsonSerializer.Deserialize<DeviceInfoDTO>(conent, _jsonOptions);
+
+            return info;
         }
     }
 }

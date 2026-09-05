@@ -3,6 +3,7 @@ using CommunityToolkit.Mvvm.ComponentModel;
 using LunktrionApp.Hubs;
 using LunktrionApp.Models.Interfaces;
 using LunktrionApp.Services;
+using LunktrionShared.Models.Requests;
 using System;
 using System.Threading.Tasks;
 
@@ -12,7 +13,10 @@ public partial class MainViewModel : ViewModelBase, IDisposable, IAsyncInitializ
 {
     private readonly MainHub _mainHub;
     private readonly DeviceIdentityService _deviceIdentityService;
+    private readonly DeviceInfoService _deviceInfoService;
     private readonly NavigationService _navigationService;
+
+    public ViewModelBase NotificationViewModel { get; set; }
 
     [ObservableProperty]
     public partial ViewModelBase? Navigation { get; set; }
@@ -26,23 +30,34 @@ public partial class MainViewModel : ViewModelBase, IDisposable, IAsyncInitializ
     {
         var currentDevice = await _deviceIdentityService.GetCurrentDeviceAsync();
 
-        await _mainHub.ConnectAsync(currentDevice);
+        var cpuInfo = await _deviceInfoService.GetDeviceCPUInfoAsync();
+        var gpuInfo = await _deviceInfoService.GetDeviceGPUInfoAsync();
+        var ramInfo = await _deviceInfoService.GetDeviceRAMInfoAsync();
+        var driveInfo = await _deviceInfoService.GetDeviceDriveInfoAsync();
+
+        await _mainHub.ConnectAsync(
+            new RegisterDeviceReuest(currentDevice, cpuInfo, gpuInfo, ramInfo, driveInfo)
+        );
     }
 
     public MainViewModel(
         MainHub mainHub,
         DeviceIdentityService deviceIdentityService,
+        DeviceInfoService deviceInfoService,
         NavigationPanelViewModel navigationPanelViewModel,
         ActiveDevicesListViewModel activeDevicesListViewModel,
-        NavigationService navigationService
+        NavigationService navigationService,
+        NotificationViewModel notificationViewModel
     )
     {
         _mainHub = mainHub;
         _deviceIdentityService = deviceIdentityService;
+        _deviceInfoService = deviceInfoService;
         _navigationService = navigationService;
 
         Navigation = navigationPanelViewModel;
         ActiveDevicesList = activeDevicesListViewModel;
+        NotificationViewModel = notificationViewModel;
 
         _navigationService.CurrentViewModelChanged += ChangeCurrentPage;
     }
@@ -58,10 +73,12 @@ public partial class MainViewModel : ViewModelBase, IDisposable, IAsyncInitializ
 
         _mainHub = null!;
         _deviceIdentityService = null!;
+        _deviceInfoService = null!;
         _navigationService = null!;
 
         Navigation = new NavigationPanelViewModel();
         ActiveDevicesList = new ActiveDevicesListViewModel();
+        NotificationViewModel = new NotificationViewModel();
     }
 
     private void ChangeCurrentPage()

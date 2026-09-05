@@ -3,6 +3,7 @@ using LunktrionShared.Models.DTOs;
 using LunktrionShared.Models.Requests;
 using LunktrionShared.Models.Responses;
 using System;
+using System.Collections.Generic;
 using System.Linq;
 using System.Threading.Tasks;
 
@@ -32,7 +33,7 @@ namespace LunktrionApp.Services
             _hardwareService = null!;
         }
 
-        public async Task<DeviceCPUInfo> GetDeviceCPUInfoAsync()
+        public async Task<List<DeviceCPUInfo>> GetDeviceCPUInfoAsync()
         {
             if (_lastCPURefreshTime.AddMinutes(5) < DateTime.Now)
             {
@@ -40,20 +41,24 @@ namespace LunktrionApp.Services
                 _lastCPURefreshTime = DateTime.Now;
             }
 
-            var cpu = _hardwareService.Hardware.CpuList.FirstOrDefault();
+            var cpus = new List<DeviceCPUInfo>();
 
-            return cpu is null
-                ? new DeviceCPUInfo()
-                : new DeviceCPUInfo(
-                    cpu.Name, 
-                    cpu.NumberOfCores, 
-                    cpu.NumberOfLogicalProcessors, 
-                    cpu.CurrentClockSpeed, 
-                    cpu.MaxClockSpeed
+            foreach (var cpu in _hardwareService.Hardware.CpuList)
+            {
+                cpus.Add(cpu is null
+                    ? new DeviceCPUInfo()
+                    : new DeviceCPUInfo(
+                        cpu.Name,
+                        (short)cpu.NumberOfCores,
+                        (short)cpu.NumberOfLogicalProcessors
+                    )
                 );
+            }
+
+            return cpus;
         }
 
-        public async Task<DeviceGPUInfo> GetDeviceGPUInfoAsync()
+        public async Task<List<DeviceGPUInfo>> GetDeviceGPUInfoAsync()
         {
             if (_lastGPURefreshTime.AddMinutes(5) < DateTime.Now)
             {
@@ -61,18 +66,23 @@ namespace LunktrionApp.Services
                 _lastGPURefreshTime = DateTime.Now;
             }
 
-            var gpu = _hardwareService.Hardware.VideoControllerList.FirstOrDefault();
+            var gpus = new List<DeviceGPUInfo>();
 
-            return gpu is null
-                ? new DeviceGPUInfo()
-                : new DeviceGPUInfo(
-                    gpu.Name, 
-                    gpu.AdapterRAM, 
-                    gpu.MaxRefreshRate
+            foreach (var gpu in _hardwareService.Hardware.VideoControllerList)
+            {
+                gpus.Add(gpu is null
+                    ? new DeviceGPUInfo()
+                    : new DeviceGPUInfo(
+                        gpu.Name,
+                        gpu.AdapterRAM
+                    )
                 );
+            }
+
+            return gpus;
         }
 
-        public async Task<DeviceRAMInfo> GetDeviceRAMInfoAsync()
+        public async Task<List<DeviceRAMInfo>> GetDeviceRAMInfoAsync()
         {
             if (_lastRAMRefreshTime.AddMinutes(5) < DateTime.Now)
             {
@@ -81,19 +91,26 @@ namespace LunktrionApp.Services
                 _lastRAMRefreshTime = DateTime.Now;
             }
 
-            var ram = _hardwareService.Hardware.MemoryList.FirstOrDefault();
+            var rams = new List<DeviceRAMInfo>();
 
-            return ram is null
-                ? new DeviceRAMInfo()
-                : new DeviceRAMInfo(
-                    _hardwareService.Hardware.MemoryList.Aggregate(0UL, (sum, next) => sum + next.Capacity),
-                    _hardwareService.Hardware.MemoryStatus.TotalPhysical,
-                    ram.MemoryType.ToString(),
-                    ram.Speed
+            foreach (var ram in _hardwareService.Hardware.MemoryList)
+            {
+                rams.Add(ram is null
+                    ? new DeviceRAMInfo()
+                    : new DeviceRAMInfo(
+                        ram.Manufacturer,
+                        ram.Capacity,
+                        ram.MemoryType.ToString(),
+                        ram.Speed
+                    )
                 );
+            }
+
+
+            return rams;
         }
 
-        public async Task<DeviceDriveInfo> GetDeviceDriveInfoAsync()
+        public async Task<List<DeviceDriveInfo>> GetDeviceDriveInfoAsync()
         {
             if (_lastDriveRefreshTime.AddMinutes(5) < DateTime.Now)
             {
@@ -101,13 +118,20 @@ namespace LunktrionApp.Services
                 _lastDriveRefreshTime = DateTime.Now;
             }
 
-            var partitions = _hardwareService.Hardware.DriveList.SelectMany(d => d.PartitionList);
+            var drivers = new List<DeviceDriveInfo>();
 
-            return new DeviceDriveInfo(
-                (uint)_hardwareService.Hardware.DriveList.Count,
-                partitions.Aggregate(0UL, (sum, next) => sum + next.Size),
-                partitions.SelectMany(p => p.VolumeList).Aggregate(0UL, (sum, next) => sum + next.FreeSpace)
-            );
+            foreach (var drive in _hardwareService.Hardware.DriveList)
+            {
+                drivers.Add(drive is null
+                    ? new DeviceDriveInfo()
+                    : new DeviceDriveInfo(
+                        drive.Caption,
+                        drive.Size
+                    )
+                );
+            }
+
+            return drivers;
         }
 
         public async void OnDeviceInfoRequestReceived(DeviceInfoRequest request)
@@ -118,14 +142,12 @@ namespace LunktrionApp.Services
             var driveInfo = await GetDeviceDriveInfoAsync();
 
             var response = new DeviceInfoResponse(
-                new DeviceInfo(
-                    cpuInfo, 
-                    gpuInfo, 
-                    ramInfo, 
-                    driveInfo
-                ), 
                 request.TargetDeviceId,
-                request.RequestorDeviceId
+                request.RequestorDeviceId,
+                cpuInfo,
+                gpuInfo,
+                ramInfo,
+                driveInfo
             );
 
             await _mainHub.SendDeviceInfoAsync(response);

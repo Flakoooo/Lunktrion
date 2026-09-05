@@ -106,7 +106,7 @@ namespace LunktrionApp.Hubs
             });
         }
 
-        public async Task ConnectAsync(DeviceIdentity currentDevice)
+        public async Task ConnectAsync(RegisterDeviceReuest request)
         {
             if (_connection.State is HubConnectionState.Disconnected)
             {
@@ -116,7 +116,7 @@ namespace LunktrionApp.Hubs
 
                 await _connection.InvokeAsync(
                     nameof(IHubContract.RegisterDevice), 
-                    currentDevice
+                    request
                 );
             }
         }

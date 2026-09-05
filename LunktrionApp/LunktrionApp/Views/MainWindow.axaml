@@ -22,5 +22,6 @@
             <ContentControl Grid.Row="1" Content="{Binding ActiveDevicesList}" />
         </Grid>
         <ContentControl Grid.Column="1" Content="{Binding CurrentViewModel}" />
+        <ContentControl Grid.Column="0" Grid.ColumnSpan="2" Content="{Binding NotificationViewModel}" />
     </Grid>
 </Window>

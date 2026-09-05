@@ -12,14 +12,30 @@ services:
     environment:
       - ASPNETCORE_ENVIRONMENT=Development
       - ASPNETCORE_HTTP_PORTS=50000
+      - ConnectionStrings__PostgreSQL=Host=postgresql;Port=5432;Database=${DB_NAME};Username=${DB_USER};Password=${DB_PASSWORD}
       - ConnectionStrings__RabbitMQ=amqp://guest:guest@rabbitmq:5672/
       - ConnectionStrings__Redis=redis:6379,abortConnect=false
     build:
       context: ..
       dockerfile: LunktrionApi/LunktrionApi/Dockerfile
     depends_on:
+      - postgresql
       - rabbitmq
       - redis
+    networks:
+      - lunktrionapi_network
+  postgresql:
+    image: postgres:16-alpine
+    container_name: LunktrionAPI_PostgreSQL
+    ports:
+      - "50090:5432"
+    volumes:
+      - postgresql_data:/var/lib/postgresql/data
+    environment:
+      - TZ=Europe/Yekaterinburg
+      - POSTGRES_PASSWORD=${DB_PASSWORD}
+      - POSTGRES_USER=${DB_USER}
+      - POSTGRES_DB=${DB_NAME}
     networks:
       - lunktrionapi_network
   rabbitmq:
@@ -31,8 +47,8 @@ services:
     volumes:
       - rabbitmq_data:/var/lib/rabbitmq
     environment:
-      - RABBITMQ_DEFAULT_USER=guest
-      - RABBITMQ_DEFAULT_PASS=guest
+      - RABBITMQ_DEFAULT_USER=${MQ_USER}
+      - RABBITMQ_DEFAULT_PASS=${MQ_PASSWORD}
     networks:
       - lunktrionapi_network
   redis:
@@ -45,6 +61,7 @@ services:
     networks:
       - lunktrionapi_network
 volumes:
+  postgresql_data:
   rabbitmq_data:
   redis_data:
 networks:

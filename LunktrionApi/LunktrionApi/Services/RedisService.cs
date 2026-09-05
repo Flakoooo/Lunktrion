@@ -21,72 +21,111 @@ namespace LunktrionApi.Services
         private static string GetDeviceInfoKey(string deviceId) => $"device:info:{deviceId}";
         private static string GetCommandKey(string deviceId) => $"device.command:{deviceId}";
 
-        public async Task<DeviceInfo?> GetDeviceInfoAsync(string deviceId)
+        private async Task<T?> GetCachedDataAsync<T>(string key)
         {
-            var bytes = await _cache.GetAsync(GetDeviceInfoKey(deviceId));
+            if (_logger.IsEnabled(LogLevel.Information))
+            {
+                _logger.LogInformation(
+                    "[Redis] Получение данных по ключу: {Key}", key
+                );
+            }
+
+            var bytes = await _cache.GetAsync(key);
 
             if (bytes is null || bytes.Length == 0)
-                return null;
+            {
+                if (_logger.IsEnabled(LogLevel.Warning))
+                {
+                    _logger.LogWarning(
+                        "[Redis] Не удалось получить данные по ключу: {Key}", key
+                    );
+                }
 
-            return JsonSerializer.Deserialize<DeviceInfo>(bytes, jsonOptions);
+                return default;
+            }
+
+            try
+            {
+                return JsonSerializer.Deserialize<T>(bytes, jsonOptions);
+            }
+            catch (JsonException ex)
+            {
+                if (_logger.IsEnabled(LogLevel.Error))
+                {
+                    _logger.LogError(
+                        ex, "[Redis] Ошибка десериализации кэша для ключа {Key} в тип {Type}", 
+                        key, typeof(T).Name
+                    );
+                }
+
+                await _cache.RemoveAsync(key);
+
+                return default;
+            }
         }
+
+        private async Task SetDataInCacheAsync<T>(string key, T data, DistributedCacheEntryOptions options)
+        {
+            if (_logger.IsEnabled(LogLevel.Information))
+            {
+                _logger.LogInformation(
+                    "[Redis] Сохранение в кэш по ключу {Key}", key
+                );
+            }
+
+            var bytes = JsonSerializer.SerializeToUtf8Bytes(data, jsonOptions);
+
+            await _cache.SetAsync(key, bytes, options);
+
+            if (_logger.IsEnabled(LogLevel.Information))
+            {
+                _logger.LogInformation(
+                    "[Redis] Данные сохранены в кэш под ключем {Key}", key
+                );
+            }
+        }
+
+        private async Task DeleteCachedDataAsync(string key)
+        {
+            if (_logger.IsEnabled(LogLevel.Information))
+            {
+                _logger.LogInformation(
+                    "[Redis] Удаление данных по ключу {Key}", key
+                );
+            }
+
+            await _cache.RemoveAsync(key);
+        }
+
+        public async Task<DeviceInfoDTO?> GetDeviceInfoAsync(string deviceId)
+            => await GetCachedDataAsync<DeviceInfoDTO>(GetDeviceInfoKey(deviceId));
 
         public async Task<DeviceExecuteCommandResponse?> GetDeviceExecuteCommandResponseAsync(string deviceId)
-        {
-            var bytes = await _cache.GetAsync(GetCommandKey(deviceId));
+            => await GetCachedDataAsync<DeviceExecuteCommandResponse>(GetCommandKey(deviceId));
 
-            if (bytes is null || bytes.Length == 0)
-                return null;
-
-            return JsonSerializer.Deserialize<DeviceExecuteCommandResponse>(bytes, jsonOptions);
-        }
-
-        public async Task SetDeviceInfoAsync(DeviceInfoResponse response)
-        {
-            var bytes = JsonSerializer.SerializeToUtf8Bytes(response.Info);
-
-            var redisOptions = new DistributedCacheEntryOptions()
+        private async Task SetDataInCacheAsync<T>(
+            string key, T data, TimeSpan expirationTime
+        ) => await SetDataInCacheAsync(
+            key, data,
+            new DistributedCacheEntryOptions()
             {
-                AbsoluteExpirationRelativeToNow = TimeSpan.FromMinutes(5)
-            };
-
-            await _cache.SetAsync(
-                GetDeviceInfoKey(response.TargetDeviceId),
-                bytes,
-                redisOptions
-            );
-
-            if (_logger.IsEnabled(LogLevel.Information))
-            {
-                _logger.LogInformation(
-                    "Данные о устройстве {DeviceId} сохранены в кэш", 
-                    response.TargetDeviceId
-                );
+                AbsoluteExpirationRelativeToNow = expirationTime
             }
-        }
+        );
 
-        public async Task SetCommandOutputAsync(DeviceExecuteCommandResponse response)
-        {
-            var bytes = JsonSerializer.SerializeToUtf8Bytes(response);
+        public async Task SetDeviceInfoAsync(
+            string deviceId, DeviceInfoDTO deviceInfoDTO
+        ) => await SetDataInCacheAsync(
+            GetDeviceInfoKey(deviceId), deviceInfoDTO, TimeSpan.FromMinutes(5)
+        );
 
-            var redisOptions = new DistributedCacheEntryOptions()
-            {
-                AbsoluteExpirationRelativeToNow = TimeSpan.FromHours(24)
-            };
+        public async Task SetCommandOutputAsync(
+            DeviceExecuteCommandResponse response
+        ) => await SetDataInCacheAsync(
+            GetCommandKey(response.RequestorDeviceId), response, TimeSpan.FromHours(24)
+        );
 
-            await _cache.SetAsync(
-                GetCommandKey(response.RequestorDeviceId),
-                bytes,
-                redisOptions
-            );
-
-            if (_logger.IsEnabled(LogLevel.Information))
-            {
-                _logger.LogInformation(
-                    "Результат выполнения команды для устройства {DeviceId} сохранён в кэш",
-                    response.RequestorDeviceId
-                );
-            }
-        }
+        public async Task DeleteDeviceInfoAsync(string deviceId)
+            => await DeleteCachedDataAsync(GetDeviceInfoKey(deviceId));
     }
 }

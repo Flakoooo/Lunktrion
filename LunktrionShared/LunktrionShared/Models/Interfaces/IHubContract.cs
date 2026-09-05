@@ -1,5 +1,4 @@
-﻿using LunktrionShared.Models.Entities;
-using LunktrionShared.Models.Requests;
+﻿using LunktrionShared.Models.Requests;
 using LunktrionShared.Models.Responses;
 
 namespace LunktrionShared.Models.Interfaces
@@ -13,7 +12,7 @@ namespace LunktrionShared.Models.Interfaces
         /// </summary>
         /// <param name="device">Регистрируемый девайс, который подключается к системе</param>
         /// <returns></returns>
-        Task RegisterDevice(DeviceIdentity device);
+        Task RegisterDevice(RegisterDeviceReuest device);
 
         /// <summary>
         /// Метод для запроса краткой информации о устройстве (CPU, GPU, RAM и память)
