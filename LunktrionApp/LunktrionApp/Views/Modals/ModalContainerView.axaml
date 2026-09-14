@@ -1,0 +1,22 @@
+<UserControl xmlns="https://github.com/avaloniaui"
+             xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
+             xmlns:d="http://schemas.microsoft.com/expression/blend/2008"
+             xmlns:mc="http://schemas.openxmlformats.org/markup-compatibility/2006"
+             xmlns:vm="using:LunktrionApp.ViewModels"
+             mc:Ignorable="d" d:DesignWidth="1920" d:DesignHeight="1080"
+             x:Class="LunktrionApp.Views.Modals.ModalContainerView"
+             x:DataType="vm:ModalContainerViewModel"
+             Background="#4D000000" 
+             IsVisible="{Binding IsModalOpen}"
+             PointerPressed="OnBackgroundClick">
+
+    <Design.DataContext>
+        <vm:ModalContainerViewModel />
+    </Design.DataContext>
+
+    <ContentControl x:Name="ModalContent"
+                    Content="{Binding ActiveModal}" 
+                    Background="Transparent"
+                    HorizontalAlignment="Center" 
+                    VerticalAlignment="Center" />
+</UserControl>

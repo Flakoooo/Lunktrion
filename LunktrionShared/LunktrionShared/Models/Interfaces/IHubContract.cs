@@ -19,7 +19,7 @@ namespace LunktrionShared.Models.Interfaces
         /// </summary>
         /// <param name="targetDeviceId">Id устройства, у которого запрашивается информация</param>
         /// <returns></returns>
-        Task RequestDeviceInfo(DeviceInfoRequest request);
+        Task RequestUpdateDeviceInfo(DeviceInfoRequest request);
 
         /// <summary>
         /// Метод для выполнения команды на требуемом устройстве
@@ -29,6 +29,8 @@ namespace LunktrionShared.Models.Interfaces
         /// <returns></returns>
         Task RequestDeviceCommand(DeviceExecuteCommandRequest request);
 
+        Task RequestDeviceShutdown(DeviceShutdownRequest request);
+
         // ПОЛУЧЕНИЕ ОТВЕТА ОТ КЛИЕНТА
 
         /// <summary>
@@ -36,7 +38,7 @@ namespace LunktrionShared.Models.Interfaces
         /// </summary>
         /// <param name="response">Информация, которую собрало устройство</param>
         /// <returns></returns>
-        Task ReceiveDeviceInfo(DeviceInfoResponse response);
+        Task ReceiveNewDeviceInfo(DeviceInfoResponse response);
 
         /// <summary>
         /// Метод возвращающий результат выполненной команды на устройстве

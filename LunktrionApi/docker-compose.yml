@@ -15,6 +15,7 @@ services:
       - ConnectionStrings__PostgreSQL=Host=postgresql;Port=5432;Database=${DB_NAME};Username=${DB_USER};Password=${DB_PASSWORD}
       - ConnectionStrings__RabbitMQ=amqp://guest:guest@rabbitmq:5672/
       - ConnectionStrings__Redis=redis:6379,abortConnect=false
+      - Security__ShutdownPin=${CRITICAL_SHUTDOWN_PIN}
     build:
       context: ..
       dockerfile: LunktrionApi/LunktrionApi/Dockerfile

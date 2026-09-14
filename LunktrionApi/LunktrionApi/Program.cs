@@ -2,6 +2,7 @@ using LunktrionApi.Background;
 using LunktrionApi.Data;
 using LunktrionApi.Hubs;
 using LunktrionApi.Services;
+using LunktrionApi.Utils;
 using Microsoft.EntityFrameworkCore;
 
 namespace LunktrionApi;
@@ -14,6 +15,8 @@ public class Program
 
         // Add services to the container.
         //builder.Services.AddAuthorization();
+
+        builder.Services.Configure<SecurityOptions>(builder.Configuration.GetSection("Security"));
 
         var connectionPostgreSQL = builder.Configuration.GetConnectionString("PostgreSQL");
         if (string.IsNullOrWhiteSpace(connectionPostgreSQL))

@@ -7,8 +7,7 @@
         </StackPanel>
     </Design.PreviewWith>
 
-    <ControlTheme x:Key="OrangeButton" TargetType="Button">
-        <Setter Property="Background" Value="#FF8033" />
+    <ControlTheme x:Key="BaseButton" TargetType="Button">
         <Setter Property="Foreground" Value="#F5E6D8" />
         <Setter Property="Padding" Value="10" />
         <Setter Property="CornerRadius" Value="12" />
@@ -36,6 +35,10 @@
                 </ContentPresenter>
             </ControlTemplate>
         </Setter>
+    </ControlTheme>
+
+    <ControlTheme x:Key="OrangeButton" TargetType="Button" BasedOn="{StaticResource BaseButton}">
+        <Setter Property="Background" Value="#FF8033" />
 
         <Style Selector="^:pointerover /template/ ContentPresenter#PART_ContentPresenter">
             <Setter Property="Background" Value="#FF6305" />
@@ -46,35 +49,8 @@
         </Style>
     </ControlTheme>
 
-    <ControlTheme x:Key="RedButton" TargetType="Button">
+    <ControlTheme x:Key="RedButton" TargetType="Button" BasedOn="{StaticResource BaseButton}">
         <Setter Property="Background" Value="#D95C4A" />
-        <Setter Property="Foreground" Value="#F5E6D8" />
-        <Setter Property="Padding" Value="10" />
-        <Setter Property="CornerRadius" Value="12" />
-        <Setter Property="FontSize" Value="32" />
-        <Setter Property="HorizontalContentAlignment" Value="Center" />
-        <Setter Property="VerticalContentAlignment" Value="Center" />
-    
-        <Setter Property="Template">
-            <ControlTemplate>
-                <ContentPresenter x:Name="PART_ContentPresenter"
-                                    Background="{TemplateBinding Background}"
-                                    Foreground="{TemplateBinding Foreground}"
-                                    Padding="{TemplateBinding Padding}"
-                                    Content="{TemplateBinding Content}"
-                                    TextWrapping="Wrap"
-                                    TextAlignment="Center"
-                                    CornerRadius="{TemplateBinding CornerRadius}"
-                                    HorizontalContentAlignment="{TemplateBinding HorizontalContentAlignment}"
-                                    VerticalContentAlignment="{TemplateBinding VerticalContentAlignment}">
-                    <ContentPresenter.Transitions>
-                        <Transitions>
-                            <BrushTransition Property="Background" Duration="0:0:0.2" />
-                        </Transitions>
-                    </ContentPresenter.Transitions>
-                </ContentPresenter>
-            </ControlTemplate>
-        </Setter>
 
         <Style Selector="^:pointerover /template/ ContentPresenter#PART_ContentPresenter">
             <Setter Property="Background" Value="#CC3F2B" />
@@ -82,6 +58,18 @@
 
         <Style Selector="^:pressed /template/ ContentPresenter#PART_ContentPresenter">
             <Setter Property="Background" Value="#A83423" />
+        </Style>
+    </ControlTheme>
+
+    <ControlTheme x:Key="GreyButton" TargetType="Button" BasedOn="{StaticResource BaseButton}">
+        <Setter Property="Background" Value="#A8998D" />
+
+        <Style Selector="^:pointerover /template/ ContentPresenter#PART_ContentPresenter">
+            <Setter Property="Background" Value="#948173" />
+        </Style>
+
+        <Style Selector="^:pressed /template/ ContentPresenter#PART_ContentPresenter">
+            <Setter Property="Background" Value="#7b6b5e" />
         </Style>
     </ControlTheme>
 

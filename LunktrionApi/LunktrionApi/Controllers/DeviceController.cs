@@ -1,6 +1,7 @@
 ﻿using LunktrionApi.Services;
 using LunktrionShared.Models.DTOs;
 using LunktrionShared.Models.Entities;
+using LunktrionShared.Models.Responses;
 using Microsoft.AspNetCore.Mvc;
 
 namespace LunktrionApi.Controllers
@@ -11,6 +12,16 @@ namespace LunktrionApi.Controllers
     {
         private readonly DeviceService _deviceService = deviceService;
 
+        [HttpGet("online/{deviceId}")]
+        public async Task<ActionResult<DeviceOnlineResponse>> GetDeviceOnlineStatusAsync(
+            [FromRoute] string deviceId
+        )
+        {
+            var isOnline = _deviceService.GetDeviceOnlineStatus(deviceId);
+
+            return Ok(isOnline);
+        }
+
         [HttpGet()]
         public async Task<ActionResult<IReadOnlyCollection<DeviceIdentity>>> GetAllDevicesAsync()
         {
@@ -20,7 +31,9 @@ namespace LunktrionApi.Controllers
         }
 
         [HttpGet("{deviceId}")]
-        public async Task<ActionResult<DeviceInfoDTO>> GetDeviceInfoAsync([FromRoute] string deviceId)
+        public async Task<ActionResult<DeviceInfoDTO>> GetDeviceInfoAsync(
+            [FromRoute] string deviceId
+        )
         {
             var info = await _deviceService.GetDeviceInfoAsync(deviceId);
 

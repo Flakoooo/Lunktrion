@@ -1,23 +1,36 @@
 ﻿using LunktrionApi.Services;
+using LunktrionApi.Utils;
 using LunktrionShared.Models.Enums;
 using LunktrionShared.Models.Interfaces;
 using LunktrionShared.Models.Requests;
 using LunktrionShared.Models.Responses;
 using LunktrionShared.Models.Utils;
 using Microsoft.AspNetCore.SignalR;
+using Microsoft.Extensions.Options;
 using System.Text.Json;
 
 namespace LunktrionApi.Hubs
 {
     public class MainHub(
+        IOptions<SecurityOptions> options,
         DeviceService deviceService, 
         RabbitMqService rabbitMqService,
         ILogger<MainHub> logger
     ) : Hub, IHubContract
     {
+        private readonly SecurityOptions _securityOptions = options.Value;
         private readonly DeviceService _deviceService = deviceService;
         private readonly RabbitMqService _rabbitMqService = rabbitMqService;
         private readonly ILogger<MainHub> _logger = logger;
+
+        private enum ErrorType
+        {
+            Unknown,
+            UnknownOperatingSystem,
+            Offline,
+            ForbiddenCommand,
+            ShutdownWaiting
+        }
 
         public override async Task OnDisconnectedAsync(Exception? exception)
         {
@@ -50,8 +63,42 @@ namespace LunktrionApi.Hubs
             await base.OnDisconnectedAsync(exception);
         }
 
-        private async Task ExecuteErrorMessageAsync(string errorMessage, string errorLogMessage)
+        private async Task ExecuteErrorMessageAsync(
+            ErrorType errorType, string deviceId, 
+            string? errorMessage = null, string? errorLogMessage = null
+        )
         {
+            if (errorType is ErrorType.Unknown)
+            {
+                errorMessage ??= "Неизвестное устройство";
+                errorLogMessage ??= $"Устройство с ID {deviceId} неизвестно";
+            }
+            else if (errorType is ErrorType.UnknownOperatingSystem)
+            {
+                errorMessage ??= "Неизвестная операционна система. Обновить данные об устройстве";
+                errorLogMessage ??= $"Устройство с ID {deviceId} имеет неизвестную операционную систему";
+            }
+            else if (errorType is ErrorType.Offline)
+            {
+                errorMessage ??= $"Устройство {deviceId} не в сети";
+                errorLogMessage ??= $"Устройство {deviceId} не в сети";
+            }
+            else if (errorType is ErrorType.ForbiddenCommand)
+            {
+                errorMessage ??= "Данная команда запрещена";
+                errorLogMessage ??= "Попытка вызова запрещенной команды";
+            }
+            else if (errorType is ErrorType.ShutdownWaiting)
+            {
+                errorMessage ??= "Запрос на выключение уже отправлен";
+                errorLogMessage ??= $"Попытка повторной отправки запрос на выключение на устройство {deviceId}";
+            }
+            else
+            {
+                errorMessage ??= "Непредвиденная ошибка";
+                errorLogMessage ??= "Непредвиденная ошибка";
+            }
+
             await Clients.Caller.SendAsync(
                 HubCommands.Error,
                 errorMessage
@@ -63,9 +110,14 @@ namespace LunktrionApi.Hubs
             }
         }
 
-        private async Task<bool> CheckReceivedCommandAsync(string command, OperatingSystemType systemType)
+        private async Task ExecuteNotificationMessageAsync(string notificationMessage) => await Clients.Caller.SendAsync(
+            HubCommands.Notification,
+            notificationMessage
+        );
+
+        private async Task<bool> CheckReceivedCommandAsync(string command, IDevice device)
         {
-            if (systemType is OperatingSystemType.Windows)
+            if (device.OperatingSystemType is OperatingSystemType.Windows)
             {
                 if (WindowsValidator.IsSafe(command))
                 {
@@ -73,8 +125,8 @@ namespace LunktrionApi.Hubs
                 }
 
                 await ExecuteErrorMessageAsync(
-                    "Данная команда запрещена",
-                    "Попытка вызова запрещенной команды на Windows"
+                    ErrorType.ForbiddenCommand, device.DeviceUUID,
+                    errorLogMessage: "Попытка вызова запрещенной команды на Windows"
                 );
 
                 return false;
@@ -155,13 +207,12 @@ namespace LunktrionApi.Hubs
         /// </summary>
         /// <param name="request"></param>
         /// <returns></returns>
-        public async Task RequestDeviceInfo(DeviceInfoRequest request)
+        public async Task RequestUpdateDeviceInfo(DeviceInfoRequest request)
         {
             var targetDevice = _deviceService.GetActiveDeviceByDeviceId(request.TargetDeviceId);
             if (targetDevice is null)
             {
-                string error = $"Устройство {request.TargetDeviceId} не в сети";
-                await ExecuteErrorMessageAsync(error, error);
+                await ExecuteErrorMessageAsync(ErrorType.Offline, request.TargetDeviceId);
                 return;
             }
 
@@ -182,8 +233,8 @@ namespace LunktrionApi.Hubs
                 if (device is null)
                 {
                     await ExecuteErrorMessageAsync(
-                        "Неизвестное устройство",
-                        $"Устройство с ID {request.TargetDeviceId} неизвестно. Отмена выполнения отправленной команды."
+                        ErrorType.Unknown, request.TargetDeviceId,
+                        errorLogMessage: $"Устройство с ID {request.TargetDeviceId} неизвестно. Отмена выполнения отправленной команды."
                     );
 
                     return;
@@ -197,22 +248,21 @@ namespace LunktrionApi.Hubs
                     );
                 }
 
-                if (!await CheckReceivedCommandAsync(request.Command, device.OperatingSystemType))
+                if (!await CheckReceivedCommandAsync(request.Command, device))
                 {
                     return;
                 }
 
                 await _rabbitMqService.SendMessageAsync(request.TargetDeviceId, request);
 
-                await Clients.Caller.SendAsync(
-                    HubCommands.Notification,
+                await ExecuteNotificationMessageAsync(
                     $"Устройство {request.TargetDeviceId} сейчас не в сети. Команда поставлена в очередь и выполнится при его включении."
                 );
 
                 return;
             }
 
-            if (!await CheckReceivedCommandAsync(request.Command, targetDevice.OperatingSystemType))
+            if (!await CheckReceivedCommandAsync(request.Command, targetDevice))
             {
                 return;
             }
@@ -226,25 +276,85 @@ namespace LunktrionApi.Hubs
                 _logger.LogInformation("Запрошен вызов команды на устройстве {TargetDeviceId}", request.TargetDeviceId);
             }
         }
-
-        // ПОЛУЧЕНИЕ ОТВЕТА ОТ КЛИЕНТА
-
-        public async Task ReceiveDeviceInfo(DeviceInfoResponse response)
+                
+        public async Task RequestDeviceShutdown(DeviceShutdownRequest request)
         {
-            await _deviceService.UpdateDeviceInfo(response);
-
-            // нужно удалить из кэша возможные старые данные
-
-            var targetDevice = _deviceService.GetActiveDeviceByDeviceId(response.RequestorDeviceId);
+            var targetDevice = _deviceService.GetActiveDeviceByDeviceId(request.TargetDeviceId);
             if (targetDevice is null)
             {
-                string error = $"Устройство {response.RequestorDeviceId} не в сети";
-                await ExecuteErrorMessageAsync(error, error);
+                await ExecuteErrorMessageAsync(ErrorType.Offline, request.TargetDeviceId);
+                return;
+            }
+
+            if (targetDevice.WaitingForShutdown)
+            {
+                await ExecuteErrorMessageAsync(
+                    ErrorType.ShutdownWaiting, request.TargetDeviceId
+                );
 
                 return;
             }
 
+            targetDevice.WaitingForShutdown = true;
+
+            bool isPinCodeCorrected = ushort.TryParse(_securityOptions.ShutdownPin, out var code) && code == request.Code;
+
+            string shutdownCommand = targetDevice.OperatingSystemType switch
+            {
+                OperatingSystemType.Windows => $"shutdown /s /f /t {(isPinCodeCorrected ? "0" : "300")}",
+                _ => string.Empty
+            };
+
+            if (string.IsNullOrWhiteSpace(shutdownCommand))
+            {
+                await ExecuteErrorMessageAsync(
+                    ErrorType.UnknownOperatingSystem, request.TargetDeviceId
+                );
+                return;
+            }
+
+            var shutdownAt = DateTime.Now;
             await Clients.Client(targetDevice.ConnectionId).SendAsync(
+                HubCommands.ExecuteCommand,
+                new DeviceExecuteCommandRequest(
+                    request.TargetDeviceId, request.RequestorDeviceId, shutdownCommand
+                )
+            );
+
+            await ExecuteNotificationMessageAsync(
+                $"Запрос на выключение устройства отправлен. Устройство будет выключено {(isPinCodeCorrected ? "в ближайщее время" : "через 5 минут")}"
+            );
+
+            if (!isPinCodeCorrected)
+            {
+                await Clients.All.SendAsync(
+                    HubCommands.ShutdownCommandNotification,
+                    new DeviceShutdownResponse(
+                        request.TargetDeviceId, request.RequestorDeviceId, shutdownAt
+                    )
+                );
+            }
+
+            if (_logger.IsEnabled(LogLevel.Information))
+            {
+                _logger.LogInformation("Запрошен вызов отключения устройства {TargetDeviceId}", request.TargetDeviceId);
+            }
+        }
+
+        // ПОЛУЧЕНИЕ ОТВЕТА ОТ КЛИЕНТА
+
+        public async Task ReceiveNewDeviceInfo(DeviceInfoResponse response)
+        {
+            await _deviceService.UpdateDeviceInfo(response);
+
+            var targetDevice = _deviceService.GetActiveDeviceByDeviceId(response.RequestorDeviceId);
+            if (targetDevice is null)
+            {
+                await ExecuteErrorMessageAsync(ErrorType.Offline, response.RequestorDeviceId);
+                return;
+            }
+
+            await Clients.All.SendAsync(
                 HubCommands.DeviceInfoReceived, response
             );
 
@@ -262,8 +372,7 @@ namespace LunktrionApi.Hubs
             var targetDevice = _deviceService.GetActiveDeviceByDeviceId(response.RequestorDeviceId);
             if (targetDevice is null)
             {
-                string error = $"Устройство {response.RequestorDeviceId} не в сети";
-                await ExecuteErrorMessageAsync(error, error);
+                await ExecuteErrorMessageAsync(ErrorType.Offline, response.RequestorDeviceId);
 
                 await _deviceService.SetDeviceExecuteCommandResponseInCacheAsync(response);
 

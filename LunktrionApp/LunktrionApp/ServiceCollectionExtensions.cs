@@ -14,11 +14,9 @@ namespace LunktrionApp
         public static void AddCommonServices(this IServiceCollection collection)
         {
             // API
-            collection.AddHttpClient<MainApi>(client =>
-            {
-                client.BaseAddress = new Uri($"{BuildConfig.ApiBaseUrl}/api/");
-            });
+            collection.AddHttpClient();
             collection.AddSingleton<MainHub>();
+            collection.AddSingleton<MainApi>();
 
             // Services
             collection.AddSingleton<NavigationService>();
@@ -37,6 +35,7 @@ namespace LunktrionApp
             collection.AddSingleton<ActiveDevicesListViewModel>();
             collection.AddSingleton<NavigationPanelViewModel>();
             collection.AddSingleton<NotificationViewModel>();
+            collection.AddSingleton<ModalContainerViewModel>();
 
             collection.AddSingleton<MainViewModel>();
             collection.AddSingleton<IAsyncInitializable>(sp => sp.GetRequiredService<MainViewModel>());

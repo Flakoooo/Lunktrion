@@ -12,8 +12,8 @@ using LunktrionShared.Models.Enums;
 using LunktrionShared.Models.Responses;
 using System;
 using System.Collections.ObjectModel;
-using System.Linq;
 using System.Threading.Tasks;
+using static LunktrionApp.ViewModels.ConfirmModalViewModel;
 
 namespace LunktrionApp.ViewModels
 {
@@ -24,6 +24,7 @@ namespace LunktrionApp.ViewModels
         private readonly NavigationService _navigationService;
         private readonly DeviceIdentityService _identityService;
         private readonly DeviceInfoService _infoService;
+        private readonly ModalContainerViewModel _modalContainerViewModel;
 
         public DeviceIdentity? CurrentDevice { get; set; }
 
@@ -66,10 +67,15 @@ namespace LunktrionApp.ViewModels
         public async Task InitializeAsync(DeviceIdentity? device = null)
         {
             var currentDevice = await _identityService.GetCurrentDeviceAsync();
-            if (device is null)
+
+            CurrentDevice = device ?? currentDevice;
+            IsCurrentDevice = string.Equals(CurrentDevice.DeviceUUID, currentDevice.DeviceUUID, StringComparison.Ordinal);
+
+            if (IsCurrentDevice)
             {
-                CurrentDevice = currentDevice;
-                IsCurrentDevice = true;
+                _mainHub.ConnectionStatusChanged += OnConnectionStatusChanged;
+
+                IsConnected = _mainHub.IsConnected;
 
                 DeviceCPUInfos = new ObservableCollection<DeviceCPUInfo>(await _infoService.GetDeviceCPUInfoAsync());
                 DeviceGPUInfos = new ObservableCollection<DeviceGPUInfo>(await _infoService.GetDeviceGPUInfoAsync());
@@ -78,11 +84,12 @@ namespace LunktrionApp.ViewModels
             }
             else
             {
-                CurrentDevice = device;
-                IsCurrentDevice = string.Equals(CurrentDevice.DeviceUUID, currentDevice.DeviceUUID, StringComparison.Ordinal);
+                _mainHub.DeviceDisconnected += OnDeviceDisconnected;
+                _mainHub.DeviceInfoReceived += OnDeviceInfoReceived;
+
+                IsConnected = await _mainApi.GetDeviceOnlineStatusAsync(CurrentDevice.DeviceUUID);
 
                 var deviceInfo = await _mainApi.GetDeviceInfoAsync(CurrentDevice.DeviceUUID);
-
                 if (deviceInfo is null)
                 {
                     return;
@@ -101,7 +108,7 @@ namespace LunktrionApp.ViewModels
             NavigationService navigationService,
             DeviceIdentityService identityService, 
             DeviceInfoService infoService,
-            CommandExecutorService commandExecutorService
+            ModalContainerViewModel modalContainerViewModel
         )
         {
             _mainHub = mainHub;
@@ -109,11 +116,7 @@ namespace LunktrionApp.ViewModels
             _navigationService = navigationService;
             _identityService = identityService;
             _infoService = infoService;
-
-            IsConnected = _mainHub.IsConnected;
-
-            _mainHub.ConnectionStatusChanged += OnConnectionStatusChanged;
-            _mainHub.DeviceInfoReceived += OnDeviceInfoReceived;
+            _modalContainerViewModel = modalContainerViewModel;
         }
 
         public DeviceViewModel()
@@ -130,6 +133,7 @@ namespace LunktrionApp.ViewModels
             _navigationService = null!;
             _identityService = new DeviceIdentityService();
             _infoService = new DeviceInfoService();
+            _modalContainerViewModel = null!;
 
             IsCurrentDevice = true;
 
@@ -160,11 +164,61 @@ namespace LunktrionApp.ViewModels
         }
 
         [RelayCommand]
+        public async Task UpdateDeviceInfo()
+        {
+            if (CurrentDevice is null) return;
+
+            var currentDevice = await _identityService.GetCurrentDeviceAsync();
+            if (string.Equals(currentDevice.DeviceUUID, CurrentDevice.DeviceUUID, StringComparison.Ordinal))
+                return;
+
+            await _mainHub.UpdateDeviceInfoAsync(CurrentDevice.DeviceUUID, currentDevice.DeviceUUID);
+        }
+
+        [RelayCommand]
         public async Task NavigateToDeviceConsole()
         {
             await _navigationService.NavigateAsync<DeviceCommandConsoleViewModel, DeviceIdentity?>(CurrentDevice);
         }
 
+        [RelayCommand]
+        public async Task ShutdownDevice()
+        {
+            if (CurrentDevice is null) return;
+
+            // вызв модального окна с выключением
+            // для локального выключения код не требовать
+            // иначе требовать, но пустой ввод возможен
+
+            if (IsCurrentDevice)
+            {
+                var shutdownConfirmed = await _modalContainerViewModel.OpenModalAsync<ConfirmModalViewModel, ConfirmModalParams, bool?>(
+                    new ConfirmModalParams(
+                        $"Вы уверены что хотите выключить {CurrentDevice.DeviceName}",
+                        ConfirmType.Delete,
+                        () => { return true; },
+                        SuccessText: "Выключить"
+                    )
+                );
+
+                if (!shutdownConfirmed.HasValue || !shutdownConfirmed.Value) return;
+            }
+            else
+            {
+                // вызов модального окна с вводом кода
+                
+                var currentDevice = await _identityService.GetCurrentDeviceAsync();
+
+                await _mainHub.ShutdownDeviceAsync(
+                    CurrentDevice.DeviceUUID, currentDevice.DeviceUUID
+                );
+            }
+        }
+
+        /// <summary>
+        /// Метод для изменения статуса в сети для ТЕКУЩЕГО устройства
+        /// </summary>
+        /// <param name="isConnected"></param>
         private void OnConnectionStatusChanged(bool isConnected)
         {
             Dispatcher.UIThread.Post(() =>
@@ -173,11 +227,28 @@ namespace LunktrionApp.ViewModels
             });
         }
 
+
+        /// <summary>
+        /// Метод для переключения статуса в сети для КОНКРЕТНОГО устройства
+        /// </summary>
+        /// <param name="deviceId"></param>
+        private void OnDeviceDisconnected(string deviceId)
+        {
+            if (CurrentDevice is null
+                || !string.Equals(CurrentDevice.DeviceUUID, deviceId, StringComparison.Ordinal)
+            ) return;
+
+            Dispatcher.UIThread.Post(() =>
+            {
+                IsConnected = false;
+            });
+        }
+
         private async void OnDeviceInfoReceived(DeviceInfoResponse response)
         {
-            var currentDevice = await _identityService.GetCurrentDeviceAsync();
-            if (!string.Equals(currentDevice.DeviceUUID, response.RequestorDeviceId, StringComparison.Ordinal))
-                return;
+            if (CurrentDevice is null 
+                || !string.Equals(CurrentDevice.DeviceUUID, response.TargetDeviceId, StringComparison.Ordinal)
+            ) return;
 
             Dispatcher.UIThread.Post(() =>
             {
@@ -190,8 +261,15 @@ namespace LunktrionApp.ViewModels
 
         public void Dispose()
         {
-            _mainHub.ConnectionStatusChanged -= OnConnectionStatusChanged;
-            _mainHub.DeviceInfoReceived -= OnDeviceInfoReceived;
+            if (IsCurrentDevice)
+            {
+                _mainHub.ConnectionStatusChanged -= OnConnectionStatusChanged;
+            }
+            else
+            {
+                _mainHub.DeviceDisconnected -= OnDeviceDisconnected;
+                _mainHub.DeviceInfoReceived -= OnDeviceInfoReceived;
+            }
         }
     }
 }

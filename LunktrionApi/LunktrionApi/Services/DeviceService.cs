@@ -21,16 +21,9 @@ namespace LunktrionApi.Services
         private readonly ILogger<DeviceService> _logger = logger;
 
         /// <summary>
-        /// Активные устройства в данный момент подключения
+        /// Активные устройства в данный момент подключения. Ключом явялется id подключения SignalR
         /// </summary>
         private readonly ConcurrentDictionary<string, ActiveDevice> _activeDevices = new();
-
-        // при подключении НОВОГО устройства, создаются записи в бд с их информацией (для процессора частота не сохраняется)
-        // для ОБНОВЛЕНИЯ ифнрмации, нужно нажать соотвествующую кнопку на клиенте
-        // (будет запрос на нужное устройство для получения новой информации)
-        // а при переподключении будет сравниваться спецификация на корректность
-
-        // зачем тогда фоновый сервис?
 
         public async Task<bool> Register(RegisterDeviceReuest request, string connectionId)
         {
@@ -201,12 +194,14 @@ namespace LunktrionApi.Services
                     await db.SaveChangesAsync();
 
                     await transaction.CommitAsync();
-                    return true;
                 }
                 catch
                 {
                     await transaction.RollbackAsync();
                 }
+
+                await _redisService.DeleteDeviceInfoAsync(response.TargetDeviceId);
+                return true;
             }
 
             if (_logger.IsEnabled(LogLevel.Information))
@@ -220,15 +215,22 @@ namespace LunktrionApi.Services
             return false;
         }
 
+        public bool GetDeviceOnlineStatus(string deviceId) => _activeDevices.Values.Any(
+            d => string.Equals(d.DeviceUUID, deviceId, StringComparison.Ordinal)
+        );
+
         public async Task<IReadOnlyCollection<DeviceIdentity>> GetAllDevicesAsync()
         {
+            var deviceForShutdown = _activeDevices.Values.Where(d => d.WaitingForShutdown).Select(d => d.DeviceUUID).ToHashSet();
+
             await using var db = await _dbFactory.CreateDbContextAsync();
 
             var devices = await db.Devices.Select(
                 d => new DeviceIdentity(
-                    d.DeviceUUID, d.DeviceName, d.OperatingSystemType, d.OperatingSystemName, d.DeviceManufacturer
+                    d.DeviceUUID, d.DeviceName, d.OperatingSystemType, 
+                    d.OperatingSystemName, d.DeviceManufacturer, deviceForShutdown.Contains(d.DeviceUUID)
                 )
-            ).ToListAsync();
+            ).AsNoTracking().ToListAsync();
 
             return devices.AsReadOnly();
         }

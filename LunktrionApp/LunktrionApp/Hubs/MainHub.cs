@@ -121,12 +121,12 @@ namespace LunktrionApp.Hubs
             }
         }
 
-        public async Task RequestDeviceInfoAsync(string targetDeviceId, string currentDeviceId)
+        public async Task UpdateDeviceInfoAsync(string targetDeviceId, string currentDeviceId)
         {
             if (_connection is not null && _connection.State is HubConnectionState.Connected)
             {
                 await _connection.SendAsync(
-                    nameof(IHubContract.RequestDeviceInfo),
+                    nameof(IHubContract.RequestUpdateDeviceInfo),
                     new DeviceInfoRequest(targetDeviceId, currentDeviceId)
                 );
             }
@@ -137,7 +137,7 @@ namespace LunktrionApp.Hubs
             if (_connection.State is HubConnectionState.Connected)
             {
                 await _connection.SendAsync(
-                    nameof(IHubContract.ReceiveDeviceInfo), 
+                    nameof(IHubContract.ReceiveNewDeviceInfo), 
                     response
                 );
             }
@@ -150,6 +150,17 @@ namespace LunktrionApp.Hubs
                 await _connection.SendAsync(
                     nameof(IHubContract.RequestDeviceCommand), 
                     new DeviceExecuteCommandRequest(targetDeviceId, currentDeviceId, command)
+                );
+            }
+        }
+
+        public async Task ShutdownDeviceAsync(string targetDeviceId, string currentDeviceId, ushort? code = null)
+        {
+            if (_connection.State is HubConnectionState.Connected)
+            {
+                await _connection.SendAsync(
+                    nameof(IHubContract.RequestDeviceShutdown),
+                    new DeviceShutdownRequest(targetDeviceId, currentDeviceId, code)
                 );
             }
         }

@@ -1,0 +1,40 @@
+<UserControl xmlns="https://github.com/avaloniaui"
+             xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
+             xmlns:d="http://schemas.microsoft.com/expression/blend/2008"
+             xmlns:mc="http://schemas.openxmlformats.org/markup-compatibility/2006"
+             xmlns:vm="using:LunktrionApp.ViewModels"
+             mc:Ignorable="d" d:DesignWidth="1920" d:DesignHeight="1080"
+             x:Class="LunktrionApp.Views.Modals.ConfirmModal"
+             x:DataType="vm:ConfirmModalViewModel"
+             Background="Transparent">
+
+    <Design.DataContext>
+        <vm:ConfirmModalViewModel />
+    </Design.DataContext>
+
+    <Border VerticalAlignment="Center" 
+            HorizontalAlignment="Center" 
+            CornerRadius="16"
+            Background="#241C16"
+            Padding="25">
+        <Grid RowDefinitions="50*, 50*" ColumnDefinitions="50*, 50*" RowSpacing="25" ColumnSpacing="12.5">
+            <TextBlock Grid.Column="0" 
+                       Grid.ColumnSpan="2" 
+                       Grid.Row="0"
+                       FontSize="32" 
+                       Foreground="#F5E6D8" 
+                       Text="{Binding DisplayText}" />
+            <Button Grid.Column="0" 
+                    Grid.Row="1" 
+                    Theme="{StaticResource GreyButton}"
+                    Content="{Binding DeclineText}"
+                    Command="{Binding CloseCommand}"/>
+            <Button Grid.Column="1" 
+                    Grid.Row="1" 
+                    Theme="{Binding ActionButtonTheme}"
+                    Content="{Binding SuccessText}" 
+                    Command="{Binding ConfirmCommand}">
+            </Button>
+        </Grid>
+    </Border>
+</UserControl>

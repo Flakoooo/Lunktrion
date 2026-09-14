@@ -8,8 +8,7 @@
              mc:Ignorable="d" d:DesignWidth="1920" d:DesignHeight="1080"
              x:Class="LunktrionApp.Views.NotificationView"
              x:DataType="vm:NotificationViewModel"
-             IsHitTestVisible="False"
-             Background="Transparent">
+             Background="{x:Null}">
 
     <UserControl.Resources>
         <conv:NotificationTypeToBrushConverter x:Key="NotificationTypeToBrushConverter"/>
@@ -20,14 +19,14 @@
     </Design.DataContext>
 
     <ListBox x:Name="NotificationsList"
-             Background="Transparent" 
+             Background="{x:Null}" 
              ItemsSource="{Binding Notifications}" 
              HorizontalAlignment="Right" 
              VerticalAlignment="Bottom">
         <ListBox.Styles>
             <Style Selector="ListBoxItem">
                 <Setter Property="Padding" Value="0,0,12,12"/>
-                <Setter Property="Background" Value="Transparent"/>
+                <Setter Property="Background" Value="{x:Null}"/>
                 <Setter Property="HorizontalAlignment" Value="Right"/> 
             </Style>
         </ListBox.Styles>

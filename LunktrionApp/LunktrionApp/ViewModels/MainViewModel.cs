@@ -1,4 +1,5 @@
 using Avalonia.Controls;
+using Avalonia.Threading;
 using CommunityToolkit.Mvvm.ComponentModel;
 using LunktrionApp.Hubs;
 using LunktrionApp.Models.Interfaces;
@@ -24,7 +25,11 @@ public partial class MainViewModel : ViewModelBase, IDisposable, IAsyncInitializ
     [ObservableProperty]
     public partial ViewModelBase? ActiveDevicesList { get; set; }
 
-    public ViewModelBase? CurrentViewModel => _navigationService.CurrentViewModel;
+    [ObservableProperty]
+    public partial ViewModelBase? CurrentViewModel { get; set; }
+
+    [ObservableProperty]
+    public partial ModalContainerViewModel? ModalContainer { get; set; }
 
     public async Task InitializeAsync()
     {
@@ -47,7 +52,8 @@ public partial class MainViewModel : ViewModelBase, IDisposable, IAsyncInitializ
         NavigationPanelViewModel navigationPanelViewModel,
         ActiveDevicesListViewModel activeDevicesListViewModel,
         NavigationService navigationService,
-        NotificationViewModel notificationViewModel
+        NotificationViewModel notificationViewModel,
+        ModalContainerViewModel modalContainerViewModel
     )
     {
         _mainHub = mainHub;
@@ -55,9 +61,12 @@ public partial class MainViewModel : ViewModelBase, IDisposable, IAsyncInitializ
         _deviceInfoService = deviceInfoService;
         _navigationService = navigationService;
 
+        CurrentViewModel = _navigationService.CurrentViewModel;
+
         Navigation = navigationPanelViewModel;
         ActiveDevicesList = activeDevicesListViewModel;
         NotificationViewModel = notificationViewModel;
+        ModalContainer = modalContainerViewModel;
 
         _navigationService.CurrentViewModelChanged += ChangeCurrentPage;
     }
@@ -79,11 +88,15 @@ public partial class MainViewModel : ViewModelBase, IDisposable, IAsyncInitializ
         Navigation = new NavigationPanelViewModel();
         ActiveDevicesList = new ActiveDevicesListViewModel();
         NotificationViewModel = new NotificationViewModel();
+        ModalContainer = new ModalContainerViewModel();
     }
 
     private void ChangeCurrentPage()
     {
-        OnPropertyChanged(nameof(CurrentViewModel));
+        Dispatcher.UIThread.Post(() =>
+        {
+            CurrentViewModel = _navigationService.CurrentViewModel;
+        });
     }
 
 

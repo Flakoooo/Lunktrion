@@ -141,15 +141,20 @@
                 </StackPanel>
                 <StackPanel Grid.Column="1" Spacing="20">
                     <Button Theme="{StaticResource OrangeButton}"
-                            Content="Обновить данные об устройстве" />
+                            Content="Обновить данные об устройстве" 
+                            IsVisible="{Binding !IsCurrentDevice}"
+                            Command="{Binding UpdateDeviceInfoCommand}"/>
                     <Button Theme="{StaticResource OrangeButton}"
                             Content="Выполнить команду на устройстве"
-                            IsVisible="{Binding !IsCurrentDevice}" />
+                            IsVisible="{Binding !IsCurrentDevice}"
+                            Command="{Binding NavigateToDeviceConsoleCommand}"/>
                     <!-- <Button Theme="{StaticResource OrangeButton}"
                             Content="Получить снимок экрана"
                             IsVisible="{Binding !IsCurrentDevice}" /> -->
                     <Button Theme="{StaticResource RedButton}"
-                            Content="Выключить устройство" />
+                            Content="Выключить устройство"
+                            IsVisible="{Binding IsCurrentDevice}" 
+                            Command="{Binding ShutdownDeviceCommand}"/>
                 </StackPanel>
             </Grid>
         </Grid>

@@ -45,6 +45,12 @@
         /// </summary>
         public const string ExecuteCommand = "ExecuteCommand";
 
+
+        /// <summary>
+        /// 
+        /// </summary>
+        public const string ShutdownCommandNotification = "ShutdownCommandNotification";
+
         /// <summary>
         /// Принимает и отправляет <see cref="Responses.DeviceExecuteCommandResponse"/>
         /// </summary>
