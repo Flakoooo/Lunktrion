@@ -1,6 +1,6 @@
 using Avalonia.Controls;
 
-namespace LunktrionApp.Views.Modals
+namespace LunktrionApp.Modals
 {
     public partial class ConfirmModal : UserControl
     {

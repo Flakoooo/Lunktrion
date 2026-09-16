@@ -1,0 +1,96 @@
+<ResourceDictionary xmlns="https://github.com/avaloniaui"
+                    xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml">
+
+    <Design.PreviewWith>
+        <Border Margin="4" Padding="4">
+            <StackPanel Spacing="8">
+                <TextBox Theme="{StaticResource BaseTextBox}" PlaceholderText="BaseTextBox" />
+                <TextBox Theme="{StaticResource BaseTextBox}" Text="BaseTextBox" />
+                <TextBox Theme="{StaticResource BaseTextBox}" IsEnabled="False" PlaceholderText="DisabledBaseTextBox" />
+                <TextBlock Text="-----------------------" />
+                <TextBox Theme="{StaticResource DarkTextBox}" PlaceholderText="DarkTextBox" />
+                <TextBox Theme="{StaticResource DarkTextBox}" Text="DarkTextBox" />
+                <TextBox Theme="{StaticResource DarkTextBox}" IsEnabled="False" PlaceholderText="DisabledDarkTextBox" />
+                <TextBlock Text="-----------------------" />
+                <TextBox Theme="{StaticResource BrownTextBox}" PlaceholderText="BrownTextBox" />
+                <TextBox Theme="{StaticResource BrownTextBox}" Text="BrownTextBox" />
+                <TextBox Theme="{StaticResource BrownTextBox}" IsEnabled="False" PlaceholderText="DisabledBrownTextBox" />
+            </StackPanel>
+        </Border>
+    </Design.PreviewWith>
+
+    <ControlTheme x:Key="BaseTextBox" TargetType="TextBox">
+        <Setter Property="Foreground" Value="#F5E6D8" />
+        <Setter Property="PlaceholderForeground" Value="#A8998D" />
+        <Setter Property="BorderThickness" Value="2" />
+
+        <Setter Property="Template">
+            <ControlTemplate>
+                <Border Name="PART_Border"
+                        Background="{TemplateBinding Background}" 
+                        BorderThickness="{TemplateBinding BorderThickness}"
+                        BorderBrush="{TemplateBinding BorderBrush}"
+                        CornerRadius="{TemplateBinding CornerRadius}"
+                        Padding="{TemplateBinding Padding}">
+                    <Panel>
+                        <TextBlock Name="PART_Watermark"
+                                   Text="{TemplateBinding PlaceholderText}"
+                                   Foreground="{TemplateBinding PlaceholderForeground}"
+                                   FontSize="{TemplateBinding FontSize}"
+                                   IsVisible="{TemplateBinding Text, Converter={x:Static StringConverters.IsNullOrEmpty}}"
+                                   HorizontalAlignment="{TemplateBinding HorizontalContentAlignment}"
+                                   VerticalAlignment="{TemplateBinding VerticalContentAlignment}"
+                                   Opacity="0.5"/>
+          
+                        <TextPresenter Name="PART_TextPresenter"
+                                       Text="{TemplateBinding Text}"
+                                       CaretBrush="{TemplateBinding CaretBrush}"
+                                       TextWrapping="{TemplateBinding TextWrapping}" />
+                         
+                    </Panel>
+                </Border>
+            </ControlTemplate>
+        </Setter>
+    </ControlTheme>
+
+    <ControlTheme x:Key="DarkTextBox" TargetType="TextBox" BasedOn="{StaticResource BaseTextBox}">
+        <Setter Property="Background" Value="#1A1410" />
+        <Setter Property="BorderBrush" Value="#1A1410" />
+        <Setter Property="CaretBrush" Value="#FF8033" />
+
+        <Style Selector="^:pointerover /template/ Border#PART_Border">
+            <Setter Property="BorderBrush" Value="#A8998D" />
+            <Setter Property="Background" Value="#1A1410" />
+        </Style>
+
+        <Style Selector="^:focus /template/ Border#PART_Border">
+            <Setter Property="BorderBrush" Value="#FF8033" />
+            <Setter Property="Background" Value="#1A1410" />
+        </Style>
+
+        <Style Selector="^:disabled /template/ Border#PART_Border">
+            <Setter Property="Background" Value="#1A1410" />
+        </Style>
+    </ControlTheme>
+
+    <ControlTheme x:Key="BrownTextBox" TargetType="TextBox" BasedOn="{StaticResource BaseTextBox}">
+        <Setter Property="Background" Value="#241C16" />
+        <Setter Property="BorderBrush" Value="#241C16" />
+        <Setter Property="CaretBrush" Value="#FF8033" />
+
+        <Style Selector="^:pointerover /template/ Border#PART_Border">
+            <Setter Property="BorderBrush" Value="#A8998D" />
+            <Setter Property="Background" Value="#241C16" />
+        </Style>
+
+        <Style Selector="^:focus /template/ Border#PART_Border">
+            <Setter Property="BorderBrush" Value="#FF8033" />
+            <Setter Property="Background" Value="#241C16" />
+        </Style>
+
+        <Style Selector="^:disabled /template/ Border#PART_Border">
+            <Setter Property="Background" Value="#241C16" />
+        </Style>
+    </ControlTheme>
+
+</ResourceDictionary>

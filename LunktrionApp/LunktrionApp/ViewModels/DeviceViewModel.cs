@@ -4,6 +4,8 @@ using CommunityToolkit.Mvvm.ComponentModel;
 using CommunityToolkit.Mvvm.Input;
 using LunktrionApp.Api;
 using LunktrionApp.Hubs;
+using LunktrionApp.Modals.Parameters;
+using LunktrionApp.Modals.Results;
 using LunktrionApp.Models.Interfaces;
 using LunktrionApp.Services;
 using LunktrionShared.Models.DTOs;
@@ -192,16 +194,15 @@ namespace LunktrionApp.ViewModels
 
             if (IsCurrentDevice)
             {
-                var shutdownConfirmed = await _modalContainerViewModel.OpenModalAsync<ConfirmModalViewModel, ConfirmModalParams, bool?>(
+                var shutdownConfirmed = await _modalContainerViewModel.OpenModalAsync<ConfirmModalViewModel, ConfirmModalParams, ConfirmResult>(
                     new ConfirmModalParams(
                         $"Вы уверены что хотите выключить {CurrentDevice.DeviceName}",
                         ConfirmType.Delete,
-                        () => { return true; },
                         SuccessText: "Выключить"
                     )
                 );
 
-                if (!shutdownConfirmed.HasValue || !shutdownConfirmed.Value) return;
+                if (!shutdownConfirmed.IsConfirmed) return;
             }
             else
             {

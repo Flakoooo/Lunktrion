@@ -97,15 +97,13 @@
                     </ListBox>
                 </Border>
                 <Border IsVisible="{Binding IsDeviceSelected}" Grid.Row="1" Background="#1A1410" CornerRadius="16">
-                    <Border Background="#241C16" Margin="12.5, 0, 12.5, 0" CornerRadius="16" VerticalAlignment="Center">
-                        <TextBox Text="{Binding CommandInput}"
-                                 PlaceholderText="Введите команду" 
-                                 PlaceholderForeground="#A8998D"
-                                 Foreground="#F5E6D8"
-                                 Background="Transparent" 
-                                 BorderThickness="0" 
-                                 Margin="10"
-                                 VerticalAlignment="Center" >
+                    <Border Margin="12.5, 0, 12.5, 0">
+                        <TextBox Theme="{StaticResource BrownTextBox}"
+                                 Text="{Binding CommandInput}"
+                                 PlaceholderText="Введите команду"
+                                 Padding="12.5"
+                                 CornerRadius="16"
+                                 VerticalAlignment="Center">
                             <TextBox.KeyBindings>
                                 <KeyBinding Gesture="Enter" Command="{Binding CreateCommandCommand}" />
                             </TextBox.KeyBindings>

@@ -2,9 +2,14 @@
                     xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml">
 
     <Design.PreviewWith>
-        <StackPanel Margin="15">
-            <Button Theme="{StaticResource OrangeButton}" Content="OrangeButton" />
-        </StackPanel>
+        <Border Margin="4" Padding="4">
+            <StackPanel Spacing="8">
+                <Button Theme="{StaticResource BaseButton}" Content="BaseButton" />
+                <Button Theme="{StaticResource OrangeButton}" Content="OrangeButton" />
+                <Button Theme="{StaticResource RedButton}" Content="RedButton" />
+                <Button Theme="{StaticResource GreyButton}" Content="GreyButton" />
+            </StackPanel>
+        </Border>
     </Design.PreviewWith>
 
     <ControlTheme x:Key="BaseButton" TargetType="Button">

@@ -4,7 +4,7 @@
              xmlns:mc="http://schemas.openxmlformats.org/markup-compatibility/2006"
              xmlns:vm="using:LunktrionApp.ViewModels"
              mc:Ignorable="d" d:DesignWidth="1920" d:DesignHeight="1080"
-             x:Class="LunktrionApp.Views.Modals.ModalContainerView"
+             x:Class="LunktrionApp.Modals.ModalContainerView"
              x:DataType="vm:ModalContainerViewModel"
              Background="#4D000000" 
              IsVisible="{Binding IsModalOpen}"

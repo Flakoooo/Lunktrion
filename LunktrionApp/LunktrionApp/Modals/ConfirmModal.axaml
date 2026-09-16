@@ -1,0 +1,79 @@
+<UserControl xmlns="https://github.com/avaloniaui"
+             xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
+             xmlns:d="http://schemas.microsoft.com/expression/blend/2008"
+             xmlns:mc="http://schemas.openxmlformats.org/markup-compatibility/2006"
+             xmlns:vm="using:LunktrionApp.ViewModels"
+             mc:Ignorable="d" d:DesignWidth="1920" d:DesignHeight="1080"
+             x:Class="LunktrionApp.Modals.ConfirmModal"
+             x:DataType="vm:ConfirmModalViewModel"
+             Background="Transparent">
+
+    <Design.DataContext>
+        <vm:ConfirmModalViewModel />
+    </Design.DataContext>
+
+    <Border VerticalAlignment="Center" 
+            HorizontalAlignment="Center" 
+            CornerRadius="16"
+            Background="#241C16"
+            Padding="25">
+
+        <StackPanel Spacing="25">
+
+            <TextBlock FontSize="32" 
+                       Foreground="#F5E6D8" 
+                       HorizontalAlignment="Center"
+                       Text="{Binding DisplayText}" />
+
+            <TextBlock FontSize="32" 
+                       Foreground="#F5E6D8" 
+                       HorizontalAlignment="Center"
+                       Text="{Binding DisplayCodeText}" />
+
+            <TextBox Theme="{StaticResource DarkTextBox}"
+                     CornerRadius="8"
+                     FontSize="32"
+                     Padding="10"
+                     PlaceholderText="Введите код"
+                     Text="{Binding CodeInput}" 
+                     IsVisible="{Binding IsCodeInputVisible}" />
+
+            <UniformGrid Columns="2" 
+                         ColumnSpacing="12.5"
+                         IsVisible="{Binding !IsCodeInputVisible}">    
+                
+                <Button Theme="{StaticResource GreyButton}"
+                        Content="{Binding DeclineText}"
+                        Command="{Binding CloseCommand}"
+                        HorizontalAlignment="Stretch" 
+                        HorizontalContentAlignment="Center" />
+
+                <Button Theme="{Binding ActionButtonTheme}"
+                        Content="{Binding SuccessText}" 
+                        Command="{Binding ConfirmCommand}"
+                        HorizontalAlignment="Stretch" 
+                        HorizontalContentAlignment="Center" />
+
+            </UniformGrid>
+
+            <StackPanel Spacing="12.5" 
+                        IsVisible="{Binding IsCodeInputVisible}">
+
+                <Button Theme="{Binding ActionButtonTheme}"
+                        Content="{Binding SuccessText}" 
+                        Command="{Binding ConfirmCommand}"
+                        HorizontalAlignment="Stretch" 
+                        HorizontalContentAlignment="Center" />
+
+                <Button Theme="{StaticResource GreyButton}"
+                        Content="{Binding DeclineText}"
+                        Command="{Binding CloseCommand}"
+                        HorizontalAlignment="Stretch" 
+                        HorizontalContentAlignment="Center" />
+
+            </StackPanel>
+
+        </StackPanel>
+
+    </Border>
+</UserControl>

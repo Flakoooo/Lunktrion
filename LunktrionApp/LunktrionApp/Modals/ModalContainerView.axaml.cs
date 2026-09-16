@@ -3,7 +3,7 @@ using Avalonia.Controls;
 using Avalonia.Input;
 using Avalonia.VisualTree;
 
-namespace LunktrionApp.Views.Modals
+namespace LunktrionApp.Modals
 {
     public partial class ModalContainerView : UserControl
     {
