@@ -1,6 +1,6 @@
 ﻿using System.Threading.Tasks;
 
-namespace LunktrionApp.Models.Interfaces
+namespace LunktrionApp.Abstractions
 {
     public interface IAsyncInitializable
     {

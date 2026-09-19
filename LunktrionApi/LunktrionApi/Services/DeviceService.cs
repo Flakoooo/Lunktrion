@@ -1,21 +1,25 @@
 ﻿using LunktrionApi.Data;
 using LunktrionApi.Models.Entities;
+using LunktrionApi.Utils;
 using LunktrionShared.Models.DTOs;
 using LunktrionShared.Models.Entities;
 using LunktrionShared.Models.Requests;
 using LunktrionShared.Models.Responses;
 using LunktrionShared.Utils;
 using Microsoft.EntityFrameworkCore;
+using Microsoft.Extensions.Options;
 using System.Collections.Concurrent;
 
 namespace LunktrionApi.Services
 {
     public class DeviceService(
+        IOptions<SecurityOptions> options,
         IDbContextFactory<AppDbContext> dbFactory,
         RedisService redisService, 
         ILogger<DeviceService> logger
     )
     {
+        private readonly SecurityOptions _securityOptions = options.Value;
         private readonly IDbContextFactory<AppDbContext> _dbFactory = dbFactory;
         private readonly RedisService _redisService = redisService;
         private readonly ILogger<DeviceService> _logger = logger;
@@ -328,6 +332,10 @@ namespace LunktrionApi.Services
 
             return deviceInfoDto;
         }
+
+        public bool VerifyCode(ushort? code) => code.HasValue
+            && ushort.TryParse(_securityOptions.ShutdownPin, out var securityCode)
+            && securityCode == code.Value;
 
         public async Task<DeviceExecuteCommandResponse?> TryGetCachedDeviceExecuteCommandResponseAsync(string targetDeviceId)
             => await _redisService.GetDeviceExecuteCommandResponseAsync(targetDeviceId);

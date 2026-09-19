@@ -2,6 +2,6 @@
 {
     public record ConfirmResult(
         bool IsConfirmed,
-        int? Code = null
+        ushort? Code = null
     );
 }

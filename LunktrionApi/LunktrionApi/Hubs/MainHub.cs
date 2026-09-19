@@ -1,24 +1,21 @@
 ﻿using LunktrionApi.Services;
-using LunktrionApi.Utils;
 using LunktrionShared.Models.Enums;
 using LunktrionShared.Models.Interfaces;
 using LunktrionShared.Models.Requests;
 using LunktrionShared.Models.Responses;
 using LunktrionShared.Models.Utils;
+using LunktrionShared.Utils;
 using Microsoft.AspNetCore.SignalR;
-using Microsoft.Extensions.Options;
 using System.Text.Json;
 
 namespace LunktrionApi.Hubs
 {
     public class MainHub(
-        IOptions<SecurityOptions> options,
         DeviceService deviceService, 
         RabbitMqService rabbitMqService,
         ILogger<MainHub> logger
     ) : Hub, IHubContract
     {
-        private readonly SecurityOptions _securityOptions = options.Value;
         private readonly DeviceService _deviceService = deviceService;
         private readonly RabbitMqService _rabbitMqService = rabbitMqService;
         private readonly ILogger<MainHub> _logger = logger;
@@ -297,13 +294,12 @@ namespace LunktrionApi.Hubs
 
             targetDevice.WaitingForShutdown = true;
 
-            bool isPinCodeCorrected = ushort.TryParse(_securityOptions.ShutdownPin, out var code) && code == request.Code;
+            bool isPinCodeCorrected = _deviceService.VerifyCode(request.Code);
 
-            string shutdownCommand = targetDevice.OperatingSystemType switch
-            {
-                OperatingSystemType.Windows => $"shutdown /s /f /t {(isPinCodeCorrected ? "0" : "300")}",
-                _ => string.Empty
-            };
+            string shutdownCommand = CommandHandler.ShutdownCommand(
+                targetDevice.OperatingSystemType, 
+                (ushort)(isPinCodeCorrected ? 0 : 300)
+            );
 
             if (string.IsNullOrWhiteSpace(shutdownCommand))
             {

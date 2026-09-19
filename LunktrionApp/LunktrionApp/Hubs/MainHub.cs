@@ -1,4 +1,5 @@
-﻿using LunktrionShared.Models.Entities;
+﻿using LunktrionApp.Services;
+using LunktrionShared.Models.Entities;
 using LunktrionShared.Models.Interfaces;
 using LunktrionShared.Models.Requests;
 using LunktrionShared.Models.Responses;
@@ -13,12 +14,10 @@ namespace LunktrionApp.Hubs
 {
     public class MainHub
     {
+        private readonly NotificationService _notificationService;
         private readonly HubConnection _connection;
 
         public event Action<bool>? ConnectionStatusChanged;
-
-        public event Action<string>? NotificationReceived;
-        public event Action<string>? ErrorReceived;
 
         public event Action<DeviceIdentity>? DeviceConnected;
         public event Action<string>? DeviceDisconnected;
@@ -31,8 +30,10 @@ namespace LunktrionApp.Hubs
 
         public bool IsConnected => _connection.State == HubConnectionState.Connected;
 
-        public MainHub()
+        public MainHub(NotificationService notificationService)
         {
+            _notificationService = notificationService;
+
             _connection = new HubConnectionBuilder()
                 .WithUrl($"{BuildConfig.ApiBaseUrl}/mainhub")
                 .WithAutomaticReconnect()
@@ -41,6 +42,7 @@ namespace LunktrionApp.Hubs
             _connection.Closed += async (error) =>
             {
                 ConnectionStatusChanged?.Invoke(false);
+                _notificationService.ShowError("Потеряно соединение");
                 Debug.WriteLine($"Connection closed: {error?.Message}");
             };
 
@@ -52,19 +54,20 @@ namespace LunktrionApp.Hubs
             _connection.Reconnected += async (connectionId) =>
             {
                 ConnectionStatusChanged?.Invoke(true);
+                _notificationService.ShowSuccess("Соединение установлено");
                 Debug.WriteLine($"Connection reconnected: {connectionId}");
             };
 
             // Прослушивание входящих уведомлений
             _connection.On<string>(HubCommands.Notification, (message) =>
             {
-                NotificationReceived?.Invoke(message);
+                _notificationService.ShowSuccess(message);
             });
 
             // Прослушивание входящих ошибок
             _connection.On<string>(HubCommands.Error, (message) =>
             {
-                ErrorReceived?.Invoke(message);
+                _notificationService.ShowError(message);
             });
 
             // Прослушивание подключения новых девайсов

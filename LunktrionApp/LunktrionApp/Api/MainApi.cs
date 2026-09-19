@@ -1,19 +1,24 @@
-﻿using LunktrionShared.Models.DTOs;
+﻿using LunktrionApp.Services;
+using LunktrionApp.ViewModels;
+using LunktrionShared.Models.DTOs;
 using LunktrionShared.Models.Entities;
-using LunktrionShared.Models.Responses;
+using LunktrionShared.Models.Requests;
 using System;
 using System.Collections.Generic;
 using System.Net.Http;
+using System.Net.Http.Json;
 using System.Text.Json;
 using System.Threading.Tasks;
 
 namespace LunktrionApp.Api
 {
     public class MainApi(
-        IHttpClientFactory httpClientFactory
+        IHttpClientFactory httpClientFactory,
+        NotificationService notificationService
     )
     {
         private readonly IHttpClientFactory _httpClientFactory = httpClientFactory;
+        private readonly NotificationService _notificationService = notificationService;
 
         private readonly JsonSerializerOptions _jsonOptions = new()
         {
@@ -22,9 +27,7 @@ namespace LunktrionApp.Api
 
         private readonly Uri _apiPath = new($"{BuildConfig.ApiBaseUrl}/api/");
 
-        public event Action<string>? ErrorReceived;
-
-        public async Task<bool> GetDeviceOnlineStatusAsync(string deviceId)
+        public async Task<bool> CheckDeviceOnlineStatusAsync(string deviceId)
         {
             try
             {
@@ -33,20 +36,46 @@ namespace LunktrionApp.Api
 
                 var response = await client.GetAsync($"v1/device/online/{deviceId}");
 
-                if (!response.IsSuccessStatusCode)
-                {
-                    ErrorReceived?.Invoke($"[{response.StatusCode}] Не удалось получить статус подключения");
+                if (response.StatusCode is System.Net.HttpStatusCode.OK)
+                    return true;
+
+                if (response.StatusCode is System.Net.HttpStatusCode.NotFound)
                     return false;
-                }
 
-                var content = await response.Content.ReadAsStringAsync();
-                var online = JsonSerializer.Deserialize<DeviceOnlineResponse>(content, _jsonOptions);
-
-                return online?.IsOnline ?? false;
+                _notificationService.ShowError($"[{response.StatusCode}] Не удалось получить статус подключения");
+                return false;
             }
             catch (Exception ex)
             {
-                ErrorReceived?.Invoke(ex.Message);
+                _notificationService.ShowError(ex.Message);
+                return false;
+            }
+        }
+
+        public async Task<bool> VerifyCodeAsync(ushort code)
+        {
+            try
+            {
+                using var client = _httpClientFactory.CreateClient();
+                client.BaseAddress = _apiPath;
+
+                var response = await client.PostAsync(
+                    "v1/device/verify/code",
+                    JsonContent.Create(new VerifyCodeRequest(code), options: _jsonOptions)
+                );
+
+                if (response.StatusCode is System.Net.HttpStatusCode.OK)
+                    return true;
+
+                if (response.StatusCode is System.Net.HttpStatusCode.Forbidden)
+                    return false;
+
+                _notificationService.ShowError($"[{response.StatusCode}] Не удалось проверить код");
+                return false;
+            }
+            catch (Exception ex)
+            {
+                _notificationService.ShowError(ex.Message);
                 return false;
             }
         }
@@ -62,7 +91,7 @@ namespace LunktrionApp.Api
 
                 if (!response.IsSuccessStatusCode)
                 {
-                    ErrorReceived?.Invoke($"[{response.StatusCode}] Не удалось получить все устройства");
+                    _notificationService.ShowError($"[{response.StatusCode}] Не удалось получить все устройства");
                     return [];
                 }
 
@@ -73,7 +102,7 @@ namespace LunktrionApp.Api
             }
             catch (Exception ex)
             {
-                ErrorReceived?.Invoke(ex.Message);
+                _notificationService.ShowError(ex.Message);
                 return [];
             }
         }
@@ -89,7 +118,7 @@ namespace LunktrionApp.Api
 
                 if (!response.IsSuccessStatusCode)
                 {
-                    ErrorReceived?.Invoke($"[{response.StatusCode}] Не удалось получить информацию о устройстве");
+                    _notificationService.ShowError($"[{response.StatusCode}] Не удалось получить информацию о устройстве");
                     return null;
                 }
 
@@ -100,7 +129,7 @@ namespace LunktrionApp.Api
             }
             catch (Exception ex)
             {
-                ErrorReceived?.Invoke(ex.Message);
+                _notificationService.ShowError(ex.Message);
                 return null;
             }
         }

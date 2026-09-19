@@ -1,47 +1,54 @@
 ﻿using Avalonia.Controls;
+using Avalonia.Threading;
 using CommunityToolkit.Mvvm.ComponentModel;
-using System.Threading.Tasks;
+using LunktrionApp.Services;
+using System;
 
 namespace LunktrionApp.ViewModels
 {
-    public partial class ModalContainerViewModel : ViewModelBase
+    public partial class ModalContainerViewModel : ViewModelBase, IDisposable
     {
+        private readonly ModalService _modalService;
+
         [ObservableProperty]
         public partial bool IsModalOpen { get; set; }
 
         [ObservableProperty]
         public partial IModalWindow? ActiveModal { get; set; }
 
+        public ModalContainerViewModel(ModalService modalService)
+        {
+            _modalService = modalService;
+
+            _modalService.ModalStateChanged += OnModalStateChanged;
+        }
+
         public ModalContainerViewModel()
         {
-            if (!Design.IsDesignMode) return;
+            if (!Design.IsDesignMode)
+            {
+                throw new InvalidOperationException(
+                    "Этот конструктор предназначен только для дизайнера Avalonia и не должен вызываться в рантайме"
+                );
+            }
+
+            _modalService = null!;
 
             IsModalOpen = true;
             ActiveModal = new ConfirmModalViewModel();
         }
 
-        public async Task<TResult> OpenModalAsync<TModal, TParam, TResult>(
-            TParam parameters
-        ) where TModal : class, IModalWindow<TParam, TResult>, new()
+        public void CloseModal() => _modalService.CloseModal();
+
+        public void OnModalStateChanged() => Dispatcher.UIThread.Post(() =>
         {
-            var modal = new TModal();
-            modal.Initialize(parameters);
+            IsModalOpen = _modalService.IsModalOpen;
+            ActiveModal = _modalService.ActiveModal;
+        });
 
-            ActiveModal = modal;
-            IsModalOpen = true;
-
-            TResult result = await modal.ResultTask;
-
-            IsModalOpen = false;
-            ActiveModal = null;
-
-            return result;
-        }
-
-        public void CloseModal()
+        public void Dispose()
         {
-            ActiveModal = null;
-            IsModalOpen = false;
+            _modalService.ModalStateChanged -= OnModalStateChanged;
         }
     }
 }

@@ -14,7 +14,7 @@ namespace LunktrionApp.Converters
             {
                 return type switch
                 {
-                    NotificationType.Notification => Brush.Parse("#5FA866"),
+                    NotificationType.Success => Brush.Parse("#5FA866"),
                     NotificationType.Error => Brush.Parse("#D95C4A"),
                     _ => Brush.Parse("#5FA866")
                 };

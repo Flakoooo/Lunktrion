@@ -28,6 +28,7 @@
             <TextBlock FontSize="32" 
                        Foreground="#F5E6D8" 
                        HorizontalAlignment="Center"
+                       IsVisible="{Binding IsCodeInputVisible}"
                        Text="{Binding DisplayCodeText}" />
 
             <TextBox Theme="{StaticResource DarkTextBox}"
@@ -61,7 +62,7 @@
 
                 <Button Theme="{Binding ActionButtonTheme}"
                         Content="{Binding SuccessText}" 
-                        Command="{Binding ConfirmCommand}"
+                        Command="{Binding ConfirmWithCodeCommand}"
                         HorizontalAlignment="Stretch" 
                         HorizontalContentAlignment="Center" />
 

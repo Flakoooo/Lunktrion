@@ -1,5 +1,5 @@
-﻿using LunktrionApp.Models.Entities;
-using LunktrionApp.Models.Interfaces;
+﻿using LunktrionApp.Abstractions;
+using LunktrionApp.Models.Entities;
 using LunktrionApp.ViewModels;
 using LunktrionShared.Models.Entities;
 using Microsoft.Extensions.DependencyInjection;

@@ -1,8 +1,8 @@
 using Avalonia.Controls;
 using Avalonia.Threading;
 using CommunityToolkit.Mvvm.ComponentModel;
+using LunktrionApp.Abstractions;
 using LunktrionApp.Hubs;
-using LunktrionApp.Models.Interfaces;
 using LunktrionApp.Services;
 using LunktrionShared.Models.Requests;
 using System;
@@ -19,17 +19,14 @@ public partial class MainViewModel : ViewModelBase, IDisposable, IAsyncInitializ
 
     public ViewModelBase NotificationViewModel { get; set; }
 
-    [ObservableProperty]
-    public partial ViewModelBase? Navigation { get; set; }
+    public NavigationPanelViewModel Navigation { get; set; }
 
-    [ObservableProperty]
-    public partial ViewModelBase? ActiveDevicesList { get; set; }
+    public ActiveDevicesListViewModel ActiveDevicesList { get; set; }
+
+    public ModalContainerViewModel ModalContainer { get; set; }
 
     [ObservableProperty]
     public partial ViewModelBase? CurrentViewModel { get; set; }
-
-    [ObservableProperty]
-    public partial ModalContainerViewModel? ModalContainer { get; set; }
 
     public async Task InitializeAsync()
     {

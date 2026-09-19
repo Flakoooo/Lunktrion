@@ -1,10 +1,12 @@
-﻿using LunktrionApp.Api;
+﻿using LunktrionApp.Abstractions;
+using LunktrionApp.Api;
 using LunktrionApp.Hubs;
-using LunktrionApp.Models.Interfaces;
 using LunktrionApp.Services;
+using LunktrionApp.Services.CommandExecutors;
 using LunktrionApp.ViewModels;
 using Microsoft.Extensions.DependencyInjection;
 using System;
+using System.Runtime.InteropServices;
 using System.Threading.Tasks;
 
 namespace LunktrionApp
@@ -19,6 +21,8 @@ namespace LunktrionApp
             collection.AddSingleton<MainApi>();
 
             // Services
+            collection.AddSingleton<NotificationService>();
+            collection.AddSingleton<ModalService>();
             collection.AddSingleton<NavigationService>();
             collection.AddSingleton<IAsyncInitializable>(
                 sp => sp.GetRequiredService<NavigationService>());
@@ -28,7 +32,21 @@ namespace LunktrionApp
             collection.AddSingleton<DeviceIdentityService>();
             collection.AddSingleton<DeviceInfoService>();
 
+            if (RuntimeInformation.IsOSPlatform(OSPlatform.Windows))
+            {
+                collection.AddSingleton<ICommandExecutor, WindowsCommandExecutor>();
+            }
+            else
+            {
+                //TODOO: заменить потом на реализацию под другие OS
+                throw new ApplicationException("В данный момент данная операционная система не поддерживается");
+            }
+
+
             collection.AddSingleton<CommandExecutorService>();
+
+            // Modals
+            collection.AddTransient<ConfirmModalViewModel>();
 
             // ViewModels
             collection.AddSingleton<LoadingViewModel>();

@@ -2,10 +2,10 @@
 using Avalonia.Threading;
 using CommunityToolkit.Mvvm.ComponentModel;
 using CommunityToolkit.Mvvm.Input;
+using LunktrionApp.Abstractions;
 using LunktrionApp.Hubs;
 using LunktrionApp.Models.Entities;
 using LunktrionApp.Models.Enums;
-using LunktrionApp.Models.Interfaces;
 using LunktrionApp.Services;
 using LunktrionShared.Models.Entities;
 using LunktrionShared.Models.Responses;

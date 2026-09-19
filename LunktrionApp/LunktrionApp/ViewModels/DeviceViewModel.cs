@@ -2,20 +2,21 @@
 using Avalonia.Threading;
 using CommunityToolkit.Mvvm.ComponentModel;
 using CommunityToolkit.Mvvm.Input;
+using LunktrionApp.Abstractions;
 using LunktrionApp.Api;
 using LunktrionApp.Hubs;
 using LunktrionApp.Modals.Parameters;
 using LunktrionApp.Modals.Results;
-using LunktrionApp.Models.Interfaces;
 using LunktrionApp.Services;
+using LunktrionApp.Services.CommandExecutors;
 using LunktrionShared.Models.DTOs;
 using LunktrionShared.Models.Entities;
 using LunktrionShared.Models.Enums;
 using LunktrionShared.Models.Responses;
+using LunktrionShared.Utils;
 using System;
 using System.Collections.ObjectModel;
 using System.Threading.Tasks;
-using static LunktrionApp.ViewModels.ConfirmModalViewModel;
 
 namespace LunktrionApp.ViewModels
 {
@@ -26,7 +27,9 @@ namespace LunktrionApp.ViewModels
         private readonly NavigationService _navigationService;
         private readonly DeviceIdentityService _identityService;
         private readonly DeviceInfoService _infoService;
-        private readonly ModalContainerViewModel _modalContainerViewModel;
+        private readonly ModalService _modalService;
+        private readonly NotificationService _notificationService;
+        private readonly ICommandExecutor _commandExecutor;
 
         public DeviceIdentity? CurrentDevice { get; set; }
 
@@ -89,7 +92,7 @@ namespace LunktrionApp.ViewModels
                 _mainHub.DeviceDisconnected += OnDeviceDisconnected;
                 _mainHub.DeviceInfoReceived += OnDeviceInfoReceived;
 
-                IsConnected = await _mainApi.GetDeviceOnlineStatusAsync(CurrentDevice.DeviceUUID);
+                IsConnected = await _mainApi.CheckDeviceOnlineStatusAsync(CurrentDevice.DeviceUUID);
 
                 var deviceInfo = await _mainApi.GetDeviceInfoAsync(CurrentDevice.DeviceUUID);
                 if (deviceInfo is null)
@@ -110,7 +113,9 @@ namespace LunktrionApp.ViewModels
             NavigationService navigationService,
             DeviceIdentityService identityService, 
             DeviceInfoService infoService,
-            ModalContainerViewModel modalContainerViewModel
+            ModalService modalService,
+            NotificationService notificationService,
+            ICommandExecutor commandExecutor
         )
         {
             _mainHub = mainHub;
@@ -118,7 +123,9 @@ namespace LunktrionApp.ViewModels
             _navigationService = navigationService;
             _identityService = identityService;
             _infoService = infoService;
-            _modalContainerViewModel = modalContainerViewModel;
+            _modalService = modalService;
+            _notificationService = notificationService;
+            _commandExecutor = commandExecutor;
         }
 
         public DeviceViewModel()
@@ -135,7 +142,9 @@ namespace LunktrionApp.ViewModels
             _navigationService = null!;
             _identityService = new DeviceIdentityService();
             _infoService = new DeviceInfoService();
-            _modalContainerViewModel = null!;
+            _modalService = null!;
+            _notificationService = null!;
+            _commandExecutor = null!;
 
             IsCurrentDevice = true;
 
@@ -188,30 +197,42 @@ namespace LunktrionApp.ViewModels
         {
             if (CurrentDevice is null) return;
 
-            // вызв модального окна с выключением
-            // для локального выключения код не требовать
-            // иначе требовать, но пустой ввод возможен
+            var shutdownResult = await _modalService.ShowModalAsync<ConfirmModalViewModel, ConfirmModalParams, ConfirmResult>(
+                new ConfirmModalParams(
+                    $"Вы уверены что хотите выключить {CurrentDevice.DeviceName}?",
+                    ConfirmType.Delete,
+                    CodeInputRequired: !IsCurrentDevice,
+                    DisplayCodeText: "Введите код подтверждения для экстренного выключения",
+                    SuccessText: "Выключить"
+                )
+            );
+
+            if (!shutdownResult.IsConfirmed) return;
 
             if (IsCurrentDevice)
             {
-                var shutdownConfirmed = await _modalContainerViewModel.OpenModalAsync<ConfirmModalViewModel, ConfirmModalParams, ConfirmResult>(
-                    new ConfirmModalParams(
-                        $"Вы уверены что хотите выключить {CurrentDevice.DeviceName}",
-                        ConfirmType.Delete,
-                        SuccessText: "Выключить"
-                    )
-                );
+                string shutdownCommand = CommandHandler.ShutdownCommand(OperatingSystemType.Windows, 0);
+                if (string.IsNullOrWhiteSpace(shutdownCommand))
+                {
+                    _notificationService.ShowError("Команда выключения не найдена");
+                    return;
+                }
 
-                if (!shutdownConfirmed.IsConfirmed) return;
+                var executorResult = await _commandExecutor.ExecuteCommandAsync(shutdownCommand);
+                if (!executorResult.IsSuccess)
+                {
+                    _notificationService.ShowError("Не удалось выключить устройство");
+                    return;
+                }
             }
             else
             {
-                // вызов модального окна с вводом кода
-                
+                if (!shutdownResult.Code.HasValue) return;
+
                 var currentDevice = await _identityService.GetCurrentDeviceAsync();
 
                 await _mainHub.ShutdownDeviceAsync(
-                    CurrentDevice.DeviceUUID, currentDevice.DeviceUUID
+                    CurrentDevice.DeviceUUID, currentDevice.DeviceUUID, shutdownResult.Code.Value
                 );
             }
         }
