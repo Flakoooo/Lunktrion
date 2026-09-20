@@ -1,4 +1,6 @@
 ﻿using Avalonia.Controls;
+using Avalonia.Threading;
+using CommunityToolkit.Mvvm.ComponentModel;
 using CommunityToolkit.Mvvm.Input;
 using LunktrionApp.Abstractions;
 using LunktrionApp.Services;
@@ -9,26 +11,38 @@ using System.Threading.Tasks;
 
 namespace LunktrionApp.ViewModels
 {
-    public partial class DevicesListViewModel : ViewModelBase, IAsyncInitializable
+    public partial class DevicesListViewModel : ViewModelBase, IAsyncInitializable<DeviceIdentity?>
     {
+        private readonly DeviceIdentityService _deviceIdentityService;
         private readonly DeviceService _deviceService;
-        private readonly NavigationService _navigationService;
+
+        public Action<DeviceIdentity>? DeviceSelected;
 
         public ObservableCollection<DeviceIdentity> Devices { get; set; } = [];
 
-        public async Task InitializeAsync()
+        [ObservableProperty]
+        public partial DeviceIdentity? SelectedDevice { get; set; }
+
+        public async Task InitializeAsync(DeviceIdentity? device = null)
         {
             var devices = await _deviceService.GetAllDevices();
             Devices = new ObservableCollection<DeviceIdentity>(devices);
+
+            var currentDevice = await _deviceIdentityService.GetCurrentDeviceAsync();
+
+            if (device is not null && !string.Equals(currentDevice.DeviceUUID, device.DeviceUUID, StringComparison.Ordinal))
+            {
+                SelectedDevice = device;
+            }
         }
 
         public DevicesListViewModel(
-            DeviceService deviceService,
-            NavigationService navigationService
+            DeviceIdentityService deviceIdentityService,
+            DeviceService deviceService
         )
         {
+            _deviceIdentityService = deviceIdentityService;
             _deviceService = deviceService;
-            _navigationService = navigationService;
         }
 
         public DevicesListViewModel()
@@ -40,36 +54,25 @@ namespace LunktrionApp.ViewModels
                 );
             }
 
+            _deviceIdentityService = null!;
             _deviceService = null!;
-            _navigationService = null!;
 
             Devices.Add(new DeviceIdentity(DeviceName: "Крутой пк", OperatingSystemName: "Windows OS", DeviceManufacturer: "MSI"));
             Devices.Add(new DeviceIdentity(DeviceName: "Телефон унопочный", OperatingSystemName: "Linux", DeviceManufacturer: "MSI"));
             Devices.Add(new DeviceIdentity(DeviceName: "Крутой пк 2", OperatingSystemName: "Windows OS 2", DeviceManufacturer: "ASUS"));
             Devices.Add(new DeviceIdentity(DeviceName: "Телефон телепатический", OperatingSystemName: "Linux Windows", DeviceManufacturer: "IPHONE"));
-            Devices.Add(new DeviceIdentity(DeviceName: "Крутой пк", OperatingSystemName: "Windows OS", DeviceManufacturer: "ACER"));
-            Devices.Add(new DeviceIdentity(DeviceName: "Телефон унопочный", OperatingSystemName: "Linux"));
-            Devices.Add(new DeviceIdentity(DeviceName: "Крутой пк 2", OperatingSystemName: "Windows OS 2"));
-            Devices.Add(new DeviceIdentity(DeviceName: "Телефон телепатический", OperatingSystemName: "Linux Windows"));
-            Devices.Add(new DeviceIdentity(DeviceName: "Крутой пк", OperatingSystemName: "Windows OS"));
-            Devices.Add(new DeviceIdentity(DeviceName: "Телефон унопочный", OperatingSystemName: "Linux"));
-            Devices.Add(new DeviceIdentity(DeviceName: "Крутой пк 2", OperatingSystemName: "Windows OS 2"));
-            Devices.Add(new DeviceIdentity(DeviceName: "Телефон телепатический", OperatingSystemName: "Linux Windows"));
-            Devices.Add(new DeviceIdentity(DeviceName: "Крутой пк", OperatingSystemName: "Windows OS"));
-            Devices.Add(new DeviceIdentity(DeviceName: "Телефон унопочный", OperatingSystemName: "Linux"));
-            Devices.Add(new DeviceIdentity(DeviceName: "Крутой пк 2", OperatingSystemName: "Windows OS 2"));
-            Devices.Add(new DeviceIdentity(DeviceName: "Телефон телепатический", OperatingSystemName: "Linux Windows"));
-        }
 
-        private async Task NavigateToDevice(DeviceIdentity device)
-        {
-            await _navigationService.NavigateAsync<DeviceViewModel, DeviceIdentity?>(device);
+            SelectedDevice = Devices[1];
         }
 
         [RelayCommand]
-        public async Task NavigateToDeviceCommandAsync(DeviceIdentity device)
+        public async Task SelectDevice(DeviceIdentity deviceIdentity)
         {
-            await NavigateToDevice(device);
+            Dispatcher.UIThread.Post(() =>
+            {
+                SelectedDevice = deviceIdentity;
+                DeviceSelected?.Invoke(SelectedDevice);
+            });
         }
     }
 }

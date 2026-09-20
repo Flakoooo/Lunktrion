@@ -36,8 +36,8 @@
     <Compile Update="Views\NavigationPanel.axaml.cs">
       <DependentUpon>NavigationPanel.axaml</DependentUpon>
     </Compile>
-    <Compile Update="Views\DevicesListView.axaml.cs">
-      <DependentUpon>DevicesListView.axaml</DependentUpon>
+    <Compile Update="Views\AllDevicesListView.axaml.cs">
+      <DependentUpon>AllDevicesListView.axaml</DependentUpon>
     </Compile>
   </ItemGroup>
 

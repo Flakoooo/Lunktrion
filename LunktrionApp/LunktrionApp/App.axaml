@@ -9,16 +9,28 @@
 
     <Application.DataTemplates>
 
-        <DataTemplate DataType="{x:Type vm:LoadingViewModel}">
-            <views:LoadingView/>
-        </DataTemplate>
-
         <DataTemplate DataType="{x:Type vm:NavigationPanelViewModel}">
             <views:NavigationPanel/>
         </DataTemplate>
 
         <DataTemplate DataType="{x:Type vm:ActiveDevicesListViewModel}">
             <views:ActiveDevicesList/>
+        </DataTemplate>
+
+        <DataTemplate DataType="{x:Type vm:DevicesListViewModel}">
+            <views:DevicesList />
+        </DataTemplate>
+
+        <DataTemplate DataType="{x:Type vm:ModalContainerViewModel}">
+            <modals:ModalContainerView />
+        </DataTemplate>
+
+        <DataTemplate DataType="{x:Type vm:ConfirmModalViewModel}">
+            <modals:ConfirmModal />
+        </DataTemplate>
+
+        <DataTemplate DataType="{x:Type vm:LoadingViewModel}">
+            <views:LoadingView/>
         </DataTemplate>
 
         <DataTemplate DataType="{x:Type vm:NotificationViewModel}">
@@ -28,21 +40,13 @@
         <DataTemplate DataType="{x:Type vm:DeviceViewModel}">
             <views:DeviceView/>
         </DataTemplate>
-
-        <DataTemplate DataType="{x:Type vm:DevicesListViewModel}">
-            <views:DevicesListView/>
+        
+        <DataTemplate DataType="{x:Type vm:AllDevicesListViewModel}">
+            <views:AllDevicesListView/>
         </DataTemplate>
 
         <DataTemplate DataType="{x:Type vm:DeviceCommandConsoleViewModel}">
             <views:DeviceCommandConsole />
-        </DataTemplate>
-
-        <DataTemplate DataType="{x:Type vm:ModalContainerViewModel}">
-            <modals:ModalContainerView />
-        </DataTemplate>
-
-        <DataTemplate DataType="{x:Type vm:ConfirmModalViewModel}">
-            <modals:ConfirmModal />
         </DataTemplate>
 
     </Application.DataTemplates>

@@ -42,7 +42,6 @@ namespace LunktrionApp
                 throw new ApplicationException("В данный момент данная операционная система не поддерживается");
             }
 
-
             collection.AddSingleton<CommandExecutorService>();
 
             // Modals
@@ -59,6 +58,7 @@ namespace LunktrionApp
             collection.AddSingleton<IAsyncInitializable>(sp => sp.GetRequiredService<MainViewModel>());
 
             collection.AddTransient<DeviceViewModel>();
+            collection.AddTransient<AllDevicesListViewModel>();
             collection.AddTransient<DevicesListViewModel>();
             collection.AddTransient<DeviceCommandConsoleViewModel>();
         }

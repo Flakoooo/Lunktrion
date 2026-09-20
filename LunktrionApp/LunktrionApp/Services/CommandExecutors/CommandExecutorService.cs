@@ -1,10 +1,9 @@
 ﻿using LunktrionApp.Hubs;
-using LunktrionApp.Services.CommandExecutors;
 using LunktrionShared.Models.Requests;
 using LunktrionShared.Models.Responses;
 using System;
 
-namespace LunktrionApp.Services
+namespace LunktrionApp.Services.CommandExecutors
 {
     public class CommandExecutorService : IDisposable
     {

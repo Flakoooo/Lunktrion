@@ -18,9 +18,10 @@ namespace LunktrionApp.ViewModels
 {
     public partial class DeviceCommandConsoleViewModel : ViewModelBase, IDisposable, IAsyncInitializable<DeviceIdentity?>
     {
-        private readonly DeviceService _deviceService;
         private readonly DeviceIdentityService _deviceIdentityService;
         private readonly MainHub _mainHub;
+
+        public DevicesListViewModel DevicesListViewModel { get; set; }
 
         public ObservableCollection<DeviceIdentity> Devices { get; set; } = [];
 
@@ -64,31 +65,23 @@ namespace LunktrionApp.ViewModels
 
         public async Task InitializeAsync(DeviceIdentity? device = null)
         {
-            var devices = await _deviceService.GetAllDevices();
-            Devices = new ObservableCollection<DeviceIdentity>(devices);
+            await DevicesListViewModel.InitializeAsync(device);
 
-            var currentDevice = await _deviceIdentityService.GetCurrentDeviceAsync();
-
-            if (device is not null)
-            {
-                if (!string.Equals(currentDevice.DeviceUUID, device.DeviceUUID, StringComparison.Ordinal))
-                {
-                    SelectedDevice = device;
-                }
-            }
+            Devices = DevicesListViewModel.Devices;
         }
 
         public DeviceCommandConsoleViewModel(
-            DeviceService deviceService,
             DeviceIdentityService deviceIdentityService, 
-            MainHub mainHub
+            MainHub mainHub,
+            DevicesListViewModel devicesListViewModel
         )
         {
-            _deviceService = deviceService;
             _deviceIdentityService = deviceIdentityService;
             _mainHub = mainHub;
+            DevicesListViewModel = devicesListViewModel;
 
             _mainHub.CommandResultReceived += OnCommandResultReceived;
+            DevicesListViewModel.DeviceSelected += OnDeviceSelected;
         }
 
         public DeviceCommandConsoleViewModel()
@@ -100,31 +93,16 @@ namespace LunktrionApp.ViewModels
                 );
             }
 
-            _deviceService = null!;
             _deviceIdentityService = null!;
             _mainHub = null!;
 
-            Devices.Add(new DeviceIdentity(DeviceName: "Крутой пк", OperatingSystemName: "Windows OS", DeviceManufacturer: "MSI"));
-            Devices.Add(new DeviceIdentity(DeviceName: "Телефон унопочный", OperatingSystemName: "Linux", DeviceManufacturer: "MSI"));
-            Devices.Add(new DeviceIdentity(DeviceName: "Крутой пк 2", OperatingSystemName: "Windows OS 2", DeviceManufacturer: "ASUS"));
-            Devices.Add(new DeviceIdentity(DeviceName: "Телефон телепатический", OperatingSystemName: "Linux Windows", DeviceManufacturer: "IPHONE"));
-
-            SelectedDevice = Devices[1];
+            DevicesListViewModel = new DevicesListViewModel();
 
             AddNewLog(string.Empty, "docker compose up -d --build", ConsoleMessageType.Command);
 
             AddNewLog(string.Empty, "иш че удумал", ConsoleMessageType.Result);
 
             _ = InitializeAsync();
-        }
-
-        [RelayCommand]
-        public async Task SelectDevice(DeviceIdentity deviceIdentity)
-        {
-            Dispatcher.UIThread.Post(() =>
-            {
-                SelectedDevice = deviceIdentity;
-            });
         }
 
         [RelayCommand]
@@ -168,9 +146,18 @@ namespace LunktrionApp.ViewModels
             });
         }
 
+        private void OnDeviceSelected(DeviceIdentity deviceIdentity)
+        {
+            Dispatcher.UIThread.Post(() =>
+            {
+                SelectedDevice = deviceIdentity;
+            });
+        }
+
         public void Dispose()
         {
             _mainHub.CommandResultReceived -= OnCommandResultReceived;
+            DevicesListViewModel.DeviceSelected -= OnDeviceSelected;
         }
     }
 }

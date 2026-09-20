@@ -4,11 +4,11 @@
              xmlns:mc="http://schemas.openxmlformats.org/markup-compatibility/2006"
              xmlns:vm="using:LunktrionApp.ViewModels"
              mc:Ignorable="d" d:DesignWidth="1400" d:DesignHeight="1000"
-             x:Class="LunktrionApp.Views.DevicesListView"
-             x:DataType="vm:DevicesListViewModel">
+             x:Class="LunktrionApp.Views.AllDevicesListView"
+             x:DataType="vm:AllDevicesListViewModel">
 
     <Design.DataContext>
-        <vm:DevicesListViewModel />
+        <vm:AllDevicesListViewModel />
     </Design.DataContext>
 
     <Border Margin="12.5, 25, 25, 25" Background="#241C16" CornerRadius="16">
